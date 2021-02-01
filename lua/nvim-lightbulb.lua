@@ -54,9 +54,13 @@ local function handler_factory(line)
     --- See lsp-handler for more information.
     ---
     --- @private
-    local function code_action_handler(_, _, actions)
-        -- No available code actions and a lightbulb is currently showing
-        if actions == nil or vim.tbl_isempty(actions) and vim.b.lightbulb_line then
+    local function code_action_handler(err, _, actions)
+        -- The request returns an error
+        if err then
+            return
+        end
+        -- No available code actions
+        if actions == nil or vim.tbl_isempty(actions) then
             _update_sign(vim.b.lightbulb_line, nil)
             return
         end
