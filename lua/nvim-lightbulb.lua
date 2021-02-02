@@ -76,11 +76,11 @@ local function handler_factory(opts, line)
         -- No available code actions
         if actions == nil or vim.tbl_isempty(actions) then
             if opts.sign.enabled then
-                _update_sign(opts.sign_priority, vim.b.lightbulb_line, nil)
+                _update_sign(opts.sign.priority, vim.b.lightbulb_line, nil)
             end
         else
             if opts.sign.enabled then
-                _update_sign(opts.sign_priority, vim.b.lightbulb_line, line + 1)
+                _update_sign(opts.sign.priority, vim.b.lightbulb_line, line + 1)
             end
 
             if opts.float.enabled then
