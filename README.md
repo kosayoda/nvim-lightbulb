@@ -91,7 +91,6 @@ vim.fn.sign_define('LightBulbSign', { text = "", texthl = "", linehl="", numhl="
 
 VimScript:
 ```vim
-highlight LightBulbFloatWin ctermfg= ctermbg= guifg= guibg=
 augroup HighlightOverride
   autocmd!
   au ColorScheme * highlight LightBulbFloatWin ctermfg= ctermbg= guifg= guibg=
