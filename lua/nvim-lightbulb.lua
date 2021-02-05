@@ -24,6 +24,10 @@ local function _update_float(opts)
     if opts.win_opts["anchor"] ~= nil then
         vim.fn.nvim_win_set_config(win, { anchor = opts.win_opts.anchor })
     end
+
+    if opts.win_opts["winblend"] ~= nil then
+        vim.fn.nvim_win_set_option(win, "winblend", opts.win_opts.winblend)
+    end
 end
 
 --- Update sign position from `old_line` to `new_line`.

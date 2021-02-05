@@ -65,7 +65,8 @@ require'nvim-lightbulb'.update_lightbulb {
         -- - pad_bottom number of lines to pad contents at bottom
         -- - offset_x   x-axis offset of the floating window
         -- - offset_y   y-axis offset of the floating window
-        -- - anchor     Corner of float to place at the cursor (NW, NE, SW, SE)
+        -- - anchor     corner of float to place at the cursor (NW, NE, SW, SE)
+        -- - winblend   transparency of the window (0-100)
         win_opts = {},
     }
 }
