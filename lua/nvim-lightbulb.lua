@@ -66,21 +66,17 @@ end
 --- Update lightbulb virtual text.
 ---
 --- @param text string The text of virtual text
---- @param old_line number|nil The line to remove the virtual text
---- @param new_line number|nil The line to add the virtual text
+--- @param line number The line to add the virtual text
 ---
 --- @private
-local function _update_virtual_text(text, old_line, new_line)
-    if old_line then
-        vim.api.nvim_buf_clear_namespace(0, LIGHTBULB_VIRTUAL_TEXT_NS, old_line, old_line + 1)
-        vim.b.lightbulb_line_vt = nil
-    end
+local function _update_virtual_text(text, line)
+    vim.api.nvim_buf_clear_namespace(0, LIGHTBULB_VIRTUAL_TEXT_NS, 0, -1)
 
-    if new_line and (vim.b.lightbulb_line_vt ~= new_line) then
-        vim.api.nvim_buf_set_virtual_text(
-            0, LIGHTBULB_VIRTUAL_TEXT_NS, new_line, {{text, LIGHTBULB_VIRTUAL_TEXT_HL}}, {}
-        )
-        vim.b.lightbulb_line_vt = new_line
+    if line then
+        vim.api.nvim_buf_set_virtual_text(0, LIGHTBULB_VIRTUAL_TEXT_NS, line, {{text, LIGHTBULB_VIRTUAL_TEXT_HL}}, {})
+
+        local events = { "CursorMoved", "CursorMovedI", "BufHidden", "BufLeave" }
+        vim.cmd("autocmd "..table.concat(events, ",").." <buffer> ++once call nvim_buf_clear_namespace(0, "..LIGHTBULB_VIRTUAL_TEXT_NS..", 0, -1)")
     end
 end
 
@@ -106,7 +102,7 @@ local function handler_factory(opts, line)
                 _update_sign(opts.sign.priority, vim.b.lightbulb_line, nil)
             end
             if opts.virtual_text.enabled then
-                _update_virtual_text(opts.virtual_text.text, vim.b.lightbulb_line_vt, nil)
+                _update_virtual_text(opts.virtual_text.text, nil)
             end
         else
             if opts.sign.enabled then
@@ -118,7 +114,7 @@ local function handler_factory(opts, line)
             end
 
             if opts.virtual_text.enabled then
-                _update_virtual_text(opts.virtual_text.text, vim.b.lightbulb_line_vt, line)
+                _update_virtual_text(opts.virtual_text.text, line)
             end
         end
 
