@@ -5,6 +5,8 @@ local M = {}
 local SIGN_GROUP = "nvim-lightbulb"
 local SIGN_NAME = "LightBulbSign"
 local LIGHTBULB_FLOAT_HL = "LightBulbFloatWin"
+local LIGHTBULB_VIRTUAL_TEXT_HL = "LightBulbVirtualText"
+local LIGHTBULB_VIRTUAL_TEXT_NS = vim.api.nvim_create_namespace("nvim-lightbulb")
 
 -- Set default sign
 if vim.tbl_isempty(vim.fn.sign_getdefined(SIGN_NAME)) then
@@ -61,6 +63,27 @@ local function _update_sign(priority, old_line, new_line)
     end
 end
 
+--- Update lightbulb virtual text.
+---
+--- @param text string The text of virtual text
+--- @param old_line number|nil The line to remove the virtual text
+--- @param new_line number|nil The line to add the virtual text
+---
+--- @private
+local function _update_virtual_text(text, old_line, new_line)
+    if old_line then
+        vim.api.nvim_buf_clear_namespace(0, LIGHTBULB_VIRTUAL_TEXT_NS, old_line, old_line + 1)
+        vim.b.lightbulb_line_vt = nil
+    end
+
+    if new_line and (vim.b.lightbulb_line_vt ~= new_line) then
+        vim.api.nvim_buf_set_virtual_text(
+            0, LIGHTBULB_VIRTUAL_TEXT_NS, new_line, {{text, LIGHTBULB_VIRTUAL_TEXT_HL}}, {}
+        )
+        vim.b.lightbulb_line_vt = new_line
+    end
+end
+
 --- Handler factory to keep track of current lightbulb line.
 ---
 --- @param line number The line when the the code action request is called
@@ -82,6 +105,9 @@ local function handler_factory(opts, line)
             if opts.sign.enabled then
                 _update_sign(opts.sign.priority, vim.b.lightbulb_line, nil)
             end
+            if opts.virtual_text.enabled then
+                _update_virtual_text(opts.virtual_text.text, vim.b.lightbulb_line_vt, nil)
+            end
         else
             if opts.sign.enabled then
                 _update_sign(opts.sign.priority, vim.b.lightbulb_line, line + 1)
@@ -89,6 +115,10 @@ local function handler_factory(opts, line)
 
             if opts.float.enabled then
                 _update_float(opts.float)
+            end
+
+            if opts.virtual_text.enabled then
+                _update_virtual_text(opts.virtual_text.text, vim.b.lightbulb_line_vt, line)
             end
         end
 
@@ -108,6 +138,10 @@ M.update_lightbulb = function(config)
             enabled = false,
             text = "💡",
             win_opts = {},
+        },
+        virtual_text = {
+            enabled = false,
+            text = "💡"
         }
     }
 
@@ -122,6 +156,11 @@ M.update_lightbulb = function(config)
     -- Float configuration
     for k, v in pairs(config.float or {}) do
         opts.float[k] = v
+    end
+
+    -- Virtual text configuration
+    for k, v in pairs(config.virtual_text or {}) do
+        opts.virtual_text[k] = v
     end
 
     local context = { diagnostics = vim.lsp.diagnostic.get_line_diagnostics() }
