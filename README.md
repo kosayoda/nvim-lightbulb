@@ -68,6 +68,11 @@ require'nvim-lightbulb'.update_lightbulb {
         -- - anchor     corner of float to place at the cursor (NW, NE, SW, SE)
         -- - winblend   transparency of the window (0-100)
         win_opts = {},
+    },
+    virtual_text = {
+        enabled = false,
+        -- Text to show at virtual text
+        text = "💡",
     }
 }
 ```
@@ -86,7 +91,7 @@ Lua:
 vim.fn.sign_define('LightBulbSign', { text = "", texthl = "", linehl="", numhl="" })
 ```
 
-##### Modify the lightbulb float window colors
+##### Modify the lightbulb float window and virtual text colors
 
 >  Fill `ctermfg`, `ctermbg`, `guifg`, `guibg` according to your preferences
 
@@ -95,10 +100,12 @@ VimScript:
 augroup HighlightOverride
   autocmd!
   au ColorScheme * highlight LightBulbFloatWin ctermfg= ctermbg= guifg= guibg=
+  au ColorScheme * highlight LightBulbVirtualText ctermfg= ctermbg= guifg= guibg=
 augroup END
 ```
 
 Lua:
 ```lua
 vim.api.nvim_command('highlight LightBulbFloatWin ctermfg= ctermbg= guifg= guibg=')
+vim.api.nvim_command('highlight LightBulbVirtualText ctermfg= ctermbg= guifg= guibg=')
 ```
