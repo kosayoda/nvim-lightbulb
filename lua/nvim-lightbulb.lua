@@ -66,17 +66,16 @@ end
 --- Update lightbulb virtual text.
 ---
 --- @param text string The text of virtual text
---- @param line number The line to add the virtual text
+--- @param line number|nil The line to add the virtual text
 ---
 --- @private
 local function _update_virtual_text(text, line)
     vim.api.nvim_buf_clear_namespace(0, LIGHTBULB_VIRTUAL_TEXT_NS, 0, -1)
 
     if line then
-        vim.api.nvim_buf_set_virtual_text(0, LIGHTBULB_VIRTUAL_TEXT_NS, line, {{text, LIGHTBULB_VIRTUAL_TEXT_HL}}, {})
-
-        local events = { "CursorMoved", "CursorMovedI", "BufHidden", "BufLeave" }
-        vim.cmd("autocmd "..table.concat(events, ",").." <buffer> ++once call nvim_buf_clear_namespace(0, "..LIGHTBULB_VIRTUAL_TEXT_NS..", 0, -1)")
+        vim.api.nvim_buf_set_virtual_text(
+            0, LIGHTBULB_VIRTUAL_TEXT_NS, line, {{text, LIGHTBULB_VIRTUAL_TEXT_HL}}, {}
+        )
     end
 end
 
