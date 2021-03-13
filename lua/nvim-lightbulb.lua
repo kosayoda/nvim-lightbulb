@@ -20,15 +20,15 @@ end
 --- @private
 local function _update_float(opts)
     local _, win = lsp_util.open_floating_preview({ opts.text }, "plaintext", opts.win_opts)
-    vim.fn.nvim_win_set_option(win, "winhl", "Normal:" .. LIGHTBULB_FLOAT_HL)
+    vim.api.nvim_win_set_option(win, "winhl", "Normal:" .. LIGHTBULB_FLOAT_HL)
 
     -- Manually anchor float because `open_floating_preview` doesn't support that option
     if opts.win_opts["anchor"] ~= nil then
-        vim.fn.nvim_win_set_config(win, { anchor = opts.win_opts.anchor })
+        vim.api.nvim_win_set_config(win, { anchor = opts.win_opts.anchor })
     end
 
     if opts.win_opts["winblend"] ~= nil then
-        vim.fn.nvim_win_set_option(win, "winblend", opts.win_opts.winblend)
+        vim.api.nvim_win_set_option(win, "winblend", opts.win_opts.winblend)
     end
 end
 
