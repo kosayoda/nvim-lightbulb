@@ -67,14 +67,18 @@ end
 ---
 --- @param text string The text of virtual text
 --- @param line number|nil The line to add the virtual text
+--- @param column number The column to add the virtual text
 ---
 --- @private
-local function _update_virtual_text(text, line)
+local function _update_virtual_text(text, line, column, text_pos)
     vim.api.nvim_buf_clear_namespace(0, LIGHTBULB_VIRTUAL_TEXT_NS, 0, -1)
 
     if line then
-        vim.api.nvim_buf_set_virtual_text(
-            0, LIGHTBULB_VIRTUAL_TEXT_NS, line, {{text, LIGHTBULB_VIRTUAL_TEXT_HL}}, {}
+        vim.api.nvim_buf_set_extmark(
+            0, LIGHTBULB_VIRTUAL_TEXT_NS, line, column,
+            {
+                virt_text = {{text}}, hl_group = LIGHTBULB_VIRTUAL_TEXT_HL, virt_text_pos = text_pos,
+            }
         )
     end
 end
@@ -113,7 +117,9 @@ local function handler_factory(opts, line)
             end
 
             if opts.virtual_text.enabled then
-                _update_virtual_text(opts.virtual_text.text, line)
+                _update_virtual_text(
+                    opts.virtual_text.text, line, opts.virtual_text.column, opts.virtual_text.text_pos
+                )
             end
         end
 
@@ -136,7 +142,9 @@ M.update_lightbulb = function(config)
         },
         virtual_text = {
             enabled = false,
-            text = "💡"
+            text = "💡",
+            column = -1,
+            text_pos = "eol",
         }
     }
 
@@ -155,6 +163,9 @@ M.update_lightbulb = function(config)
 
     -- Virtual text configuration
     for k, v in pairs(config.virtual_text or {}) do
+        if k == "text_pos" and not (v == "eol" or v == "overlay") then
+            error("The text_pos setting must be 'eol' or 'overlay'")
+        end
         opts.virtual_text[k] = v
     end
 

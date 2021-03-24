@@ -73,6 +73,15 @@ require'nvim-lightbulb'.update_lightbulb {
         enabled = false,
         -- Text to show at virtual text
         text = "💡",
+        -- Where to place the virtual text (either "eol" or "overlay")
+        -- The "eol" mode places the virtual text after the EOL character, which may be
+        --   overriden by any virtual text set by nvim_buf_set_virtual_text
+        -- The "overlay" mode allows specifying the `column` to display the virtual text
+        --   over other virtual and non-virtual text
+        text_pos = "eol",
+        -- The column to show the virtual text (only works with text_pos = "overlay")
+        -- Pass -1 to place the virtual text on the EOL character
+        column = -1,
     }
 }
 ```
