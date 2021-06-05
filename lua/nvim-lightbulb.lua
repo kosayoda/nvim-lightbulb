@@ -1,7 +1,6 @@
 local vim = vim
 local lsp_util = require("vim.lsp.util")
 local M = {}
-local current_lightbulb_status_text = ""
 
 local SIGN_GROUP = "nvim-lightbulb"
 local SIGN_NAME = "LightBulbSign"
@@ -80,8 +79,12 @@ local function _update_virtual_text(text, line)
     end
 end
 
+--- Update lightbulb status text
+--- 
+--- @param text string The new status text
+---
 local function _update_status_text(text)
-    current_lightbulb_status_text = text
+    vim.b.current_lightbulb_status_text = text
 end
 
 --- Handler factory to keep track of current lightbulb line.
@@ -135,7 +138,7 @@ local function handler_factory(opts, line)
 end
 
 M.get_status_text = function()
-    return current_lightbulb_status_text
+    return vim.b.current_lightbulb_status_text
 end
 
 M.update_lightbulb = function(config)
@@ -157,7 +160,7 @@ M.update_lightbulb = function(config)
         status_text = {
             enabled = false,
             text = "💡",
-            non_lit_text = "OFF"
+            not_lit_text = ""
         }
     }
 

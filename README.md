@@ -73,6 +73,13 @@ require'nvim-lightbulb'.update_lightbulb {
         enabled = false,
         -- Text to show at virtual text
         text = "💡",
+    },
+    status_text = {
+        enabled = false,
+        -- Text to show at when status text requested
+        text = "💡",
+        -- Text to show when status text requested and no actions available
+        not_lit_text = ""
     }
 }
 ```
@@ -109,3 +116,10 @@ Lua:
 vim.api.nvim_command('highlight LightBulbFloatWin ctermfg= ctermbg= guifg= guibg=')
 vim.api.nvim_command('highlight LightBulbVirtualText ctermfg= ctermbg= guifg= guibg=')
 ```
+
+##### Status-line text usage
+
+With the status_text option enabled you can access the current lightbulb state
+through the lua function `require'nvim-lightbulb'.get_status_text()`. This
+allows easy integration with multiple different status line plugins.
+
