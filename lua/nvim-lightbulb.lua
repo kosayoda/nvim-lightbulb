@@ -138,7 +138,7 @@ local function handler_factory(opts, line)
 end
 
 M.get_status_text = function()
-    return vim.b.current_lightbulb_status_text
+    return vim.b.current_lightbulb_status_text or ""
 end
 
 M.update_lightbulb = function(config)
