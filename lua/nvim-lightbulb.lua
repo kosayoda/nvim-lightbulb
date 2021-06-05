@@ -79,6 +79,14 @@ local function _update_virtual_text(text, line)
     end
 end
 
+--- Update lightbulb status text
+--- 
+--- @param text string The new status text
+---
+local function _update_status_text(text)
+    vim.b.current_lightbulb_status_text = text
+end
+
 --- Handler factory to keep track of current lightbulb line.
 ---
 --- @param line number The line when the the code action request is called
@@ -103,6 +111,9 @@ local function handler_factory(opts, line)
             if opts.virtual_text.enabled then
                 _update_virtual_text(opts.virtual_text.text, nil)
             end
+            if opts.status_text.enabled then
+                _update_status_text(opts.status_text.text_unavailable)
+            end
         else
             if opts.sign.enabled then
                 _update_sign(opts.sign.priority, vim.b.lightbulb_line, line + 1)
@@ -115,11 +126,19 @@ local function handler_factory(opts, line)
             if opts.virtual_text.enabled then
                 _update_virtual_text(opts.virtual_text.text, line)
             end
+
+            if opts.status_text.enabled then
+                _update_status_text(opts.status_text.text)
+            end
         end
 
     end
 
     return code_action_handler
+end
+
+M.get_status_text = function()
+    return vim.b.current_lightbulb_status_text or ""
 end
 
 M.update_lightbulb = function(config)
@@ -137,6 +156,11 @@ M.update_lightbulb = function(config)
         virtual_text = {
             enabled = false,
             text = "💡"
+        },
+        status_text = {
+            enabled = false,
+            text = "💡",
+            text_unavailable = ""
         }
     }
 
@@ -156,6 +180,11 @@ M.update_lightbulb = function(config)
     -- Virtual text configuration
     for k, v in pairs(config.virtual_text or {}) do
         opts.virtual_text[k] = v
+    end
+
+    -- Status text configuration
+    for k, v in pairs(config.status_text or {}) do
+        opts.status_text[k] = v
     end
 
     local context = { diagnostics = vim.lsp.diagnostic.get_line_diagnostics() }
