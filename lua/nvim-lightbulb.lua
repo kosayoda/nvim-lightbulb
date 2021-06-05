@@ -112,7 +112,7 @@ local function handler_factory(opts, line)
                 _update_virtual_text(opts.virtual_text.text, nil)
             end
             if opts.status_text.enabled then
-                _update_status_text(opts.status_text.not_lit_text)
+                _update_status_text(opts.status_text.text_unavailable)
             end
         else
             if opts.sign.enabled then
