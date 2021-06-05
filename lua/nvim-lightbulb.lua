@@ -160,7 +160,7 @@ M.update_lightbulb = function(config)
         status_text = {
             enabled = false,
             text = "💡",
-            not_lit_text = ""
+            text_unavailable = ""
         }
     }
 
