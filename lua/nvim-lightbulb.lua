@@ -19,6 +19,17 @@ end
 ---
 --- @private
 local function _update_float(opts)
+    local bufnr = vim.api.nvim_get_current_buf()
+    -- prevent `open_floating_preview` close the previous floating window
+    vim.api.nvim_buf_set_var(bufnr, "lsp_floating_preview", nil)
+
+    -- check if another lightbulb floating window already exists for this buffer
+    -- and close it if needed
+    local existing_float = vim.F.npcall(vim.api.nvim_buf_get_var, bufnr, "lightbulb_floating_window")
+    if existing_float and vim.api.nvim_win_is_valid(existing_float) then
+      vim.api.nvim_win_close(existing_float, true)
+    end
+
     local _, win = lsp_util.open_floating_preview({ opts.text }, "plaintext", opts.win_opts)
     vim.api.nvim_win_set_option(win, "winhl", "Normal:" .. LIGHTBULB_FLOAT_HL)
 
@@ -30,6 +41,8 @@ local function _update_float(opts)
     if opts.win_opts["winblend"] ~= nil then
         vim.api.nvim_win_set_option(win, "winblend", opts.win_opts.winblend)
     end
+
+    vim.api.nvim_buf_set_var(bufnr, "lightbulb_floating_window", win)
 end
 
 --- Update sign position from `old_line` to `new_line`.
