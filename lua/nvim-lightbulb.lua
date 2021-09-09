@@ -100,6 +100,27 @@ local function _update_status_text(text)
     vim.b.current_lightbulb_status_text = text
 end
 
+
+--- Patch for breaking neovim master update to LSP handlers
+--- See: https://github.com/neovim/neovim/issues/14090#issuecomment-913198455
+local function mk_handler(fn)
+  return function(...)
+    local config_or_client_id = select(4, ...)
+    local is_new = type(config_or_client_id) ~= 'number'
+    if is_new then
+      fn(...)
+    else
+      local err = select(1, ...)
+      local method = select(2, ...)
+      local result = select(3, ...)
+      local client_id = select(4, ...)
+      local bufnr = select(5, ...)
+      local config = select(6, ...)
+      fn(err, result, { method = method, client_id = client_id, bufnr = bufnr }, config)
+    end
+  end
+end
+
 --- Handler factory to keep track of current lightbulb line.
 ---
 --- @param line number The line when the the code action request is called
@@ -111,7 +132,7 @@ local function handler_factory(opts, line)
     --- See lsp-handler for more information.
     ---
     --- @private
-    local function code_action_handler(err, _, actions)
+    local function code_action_handler(err, actions)
         -- The request returns an error
         if err then
             return
@@ -147,7 +168,7 @@ local function handler_factory(opts, line)
 
     end
 
-    return code_action_handler
+    return mk_handler(code_action_handler)
 end
 
 M.get_status_text = function()
