@@ -16,10 +16,11 @@ end
 --- Update lightbulb float.
 ---
 --- @param opts table Available options for the float handler
+--- @param bufnr number|nil Buffer handle
 ---
 --- @private
-local function _update_float(opts)
-    local bufnr = vim.api.nvim_get_current_buf()
+local function _update_float(opts, bufnr)
+    bufnr = bufnr or vim.api.nvim_get_current_buf()
     -- prevent `open_floating_preview` close the previous floating window
     vim.api.nvim_buf_set_var(bufnr, "lsp_floating_preview", nil)
 
@@ -53,12 +54,15 @@ end
 --- @param priority number The priority of the sign to add
 --- @param old_line number|nil The line to remove the sign on
 --- @param new_line number|nil The line to add the sign on
+--- @param bufnr number|nil Buffer handle
 ---
 --- @private
-local function _update_sign(priority, old_line, new_line)
+local function _update_sign(priority, old_line, new_line, bufnr)
+    bufnr = bufnr or "%"
+
     if old_line then
         vim.fn.sign_unplace(
-            SIGN_GROUP, { id = old_line, buffer = "%" }
+            SIGN_GROUP, { id = old_line, buffer = bufnr }
         )
 
         -- Update current lightbulb line
@@ -68,7 +72,7 @@ local function _update_sign(priority, old_line, new_line)
     -- Avoid redrawing lightbulb if code action line did not change
     if new_line and (vim.b.lightbulb_line ~= new_line) then
         vim.fn.sign_place(
-            new_line, SIGN_GROUP, SIGN_NAME, "%",
+            new_line, SIGN_GROUP, SIGN_NAME, bufnr,
             { lnum = new_line, priority = priority }
         )
         -- Update current lightbulb line
@@ -80,24 +84,28 @@ end
 ---
 --- @param text string The text of virtual text
 --- @param line number|nil The line to add the virtual text
+--- @param bufnr number|nil Buffer handle
 ---
 --- @private
-local function _update_virtual_text(text, line)
-    vim.api.nvim_buf_clear_namespace(0, LIGHTBULB_VIRTUAL_TEXT_NS, 0, -1)
+local function _update_virtual_text(text, line, bufnr)
+    bufnr = bufnr or vim.api.nvim_get_current_buf()
+    vim.api.nvim_buf_clear_namespace(bufnr, LIGHTBULB_VIRTUAL_TEXT_NS, 0, -1)
 
     if line then
         vim.api.nvim_buf_set_virtual_text(
-            0, LIGHTBULB_VIRTUAL_TEXT_NS, line, {{text, LIGHTBULB_VIRTUAL_TEXT_HL}}, {}
+            bufnr, LIGHTBULB_VIRTUAL_TEXT_NS, line, {{text, LIGHTBULB_VIRTUAL_TEXT_HL}}, {}
         )
     end
 end
 
 --- Update lightbulb status text
---- 
---- @param text string The new status text
 ---
-local function _update_status_text(text)
-    vim.b.current_lightbulb_status_text = text
+--- @param text string The new status text
+--- @param bufnr number|nil Buffer handle
+---
+local function _update_status_text(text, bufnr)
+    bufnr = bufnr or vim.api.nvim_get_current_buf()
+    vim.api.nvim_buf_set_var(bufnr, 'current_lightbulb_status_text', text)
 end
 
 
@@ -125,8 +133,9 @@ end
 ---
 --- @param line number The line when the the code action request is called
 --- @param opts table Options passed when `update_lightbulb` is called
+--- @param bufnr number|nil Buffer handle
 --- @private
-local function handler_factory(opts, line)
+local function handler_factory(opts, line, bufnr)
     --- Handler for textDocument/codeAction.
     ---
     --- See lsp-handler for more information.
@@ -140,29 +149,29 @@ local function handler_factory(opts, line)
         -- No available code actions
         if actions == nil or vim.tbl_isempty(actions) then
             if opts.sign.enabled then
-                _update_sign(opts.sign.priority, vim.b.lightbulb_line, nil)
+                _update_sign(opts.sign.priority, vim.b.lightbulb_line, nil, bufnr)
             end
             if opts.virtual_text.enabled then
-                _update_virtual_text(opts.virtual_text.text, nil)
+                _update_virtual_text(opts.virtual_text.text, nil, bufnr)
             end
             if opts.status_text.enabled then
-                _update_status_text(opts.status_text.text_unavailable)
+                _update_status_text(opts.status_text.text_unavailable, bufnr)
             end
         else
             if opts.sign.enabled then
-                _update_sign(opts.sign.priority, vim.b.lightbulb_line, line + 1)
+                _update_sign(opts.sign.priority, vim.b.lightbulb_line, line + 1, bufnr)
             end
 
             if opts.float.enabled then
-                _update_float(opts.float)
+                _update_float(opts.float, bufnr)
             end
 
             if opts.virtual_text.enabled then
-                _update_virtual_text(opts.virtual_text.text, line)
+                _update_virtual_text(opts.virtual_text.text, line, bufnr)
             end
 
             if opts.status_text.enabled then
-                _update_status_text(opts.status_text.text)
+                _update_status_text(opts.status_text.text, bufnr)
             end
         end
 
@@ -171,8 +180,9 @@ local function handler_factory(opts, line)
     return mk_handler(code_action_handler)
 end
 
-M.get_status_text = function()
-    return vim.b.current_lightbulb_status_text or ""
+M.get_status_text = function(bufnr)
+    bufnr = bufnr or vim.api.nvim_get_current_buf()
+    return vim.api.nvim_buf_get_var(bufnr, 'current_lightbulb_status_text') or ''
 end
 
 M.update_lightbulb = function(config)
@@ -224,8 +234,9 @@ M.update_lightbulb = function(config)
     local context = { diagnostics = vim.lsp.diagnostic.get_line_diagnostics() }
     local params = lsp_util.make_range_params()
     params.context = context
+    local bufnr = vim.api.nvim_get_current_buf()
     vim.lsp.buf_request(
-        0, 'textDocument/codeAction', params, handler_factory(opts, params.range.start.line)
+        0, 'textDocument/codeAction', params, handler_factory(opts, params.range.start.line, bufnr)
     )
 end
 
