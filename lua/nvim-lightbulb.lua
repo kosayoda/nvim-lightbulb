@@ -182,7 +182,7 @@ end
 
 M.get_status_text = function(bufnr)
     bufnr = bufnr or vim.api.nvim_get_current_buf()
-    return vim.api.nvim_buf_get_var(bufnr, 'current_lightbulb_status_text') or ''
+    return vim.F.npcall(vim.api.nvim_buf_get_var, bufnr, "current_lightbulb_status_text") or ""
 end
 
 M.update_lightbulb = function(config)
