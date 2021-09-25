@@ -111,7 +111,7 @@ local function handler_factory(opts, line)
     --- See lsp-handler for more information.
     ---
     --- @private
-    local function code_action_handler(err, _, actions)
+    local function code_action_handler(err, actions)
         -- The request returns an error
         if err then
             return
