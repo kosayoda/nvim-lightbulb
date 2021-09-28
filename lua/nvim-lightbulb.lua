@@ -92,8 +92,8 @@ local function _update_virtual_text(text, line, bufnr)
     vim.api.nvim_buf_clear_namespace(bufnr, LIGHTBULB_VIRTUAL_TEXT_NS, 0, -1)
 
     if line then
-        vim.api.nvim_buf_set_virtual_text(
-            bufnr, LIGHTBULB_VIRTUAL_TEXT_NS, line, {{text, LIGHTBULB_VIRTUAL_TEXT_HL}}, {}
+        vim.api.nvim_buf_set_extmark(
+            bufnr, LIGHTBULB_VIRTUAL_TEXT_NS, line, -1, { virt_text = {{ text }}, hl_group = LIGHTBULB_VIRTUAL_TEXT_HL, hl_mode = 'combine' }
         )
     end
 end
