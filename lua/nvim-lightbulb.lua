@@ -82,18 +82,18 @@ end
 
 --- Update lightbulb virtual text.
 ---
---- @param text string The text of virtual text
+--- @param opts table Available options for the virtual text handler
 --- @param line number|nil The line to add the virtual text
 --- @param bufnr number|nil Buffer handle
 ---
 --- @private
-local function _update_virtual_text(text, line, bufnr)
+local function _update_virtual_text(opts, line, bufnr)
     bufnr = bufnr or vim.api.nvim_get_current_buf()
     vim.api.nvim_buf_clear_namespace(bufnr, LIGHTBULB_VIRTUAL_TEXT_NS, 0, -1)
 
     if line then
         vim.api.nvim_buf_set_extmark(
-            bufnr, LIGHTBULB_VIRTUAL_TEXT_NS, line, -1, { virt_text = {{ text }}, hl_group = LIGHTBULB_VIRTUAL_TEXT_HL, hl_mode = 'combine' }
+            bufnr, LIGHTBULB_VIRTUAL_TEXT_NS, line, -1, { virt_text = {{ opts.text, LIGHTBULB_VIRTUAL_TEXT_HL }}, hl_mode = opts.hl_mode }
         )
     end
 end
@@ -167,7 +167,7 @@ local function handler_factory(opts, line, bufnr)
             end
 
             if opts.virtual_text.enabled then
-                _update_virtual_text(opts.virtual_text.text, line, bufnr)
+                _update_virtual_text(opts.virtual_text, line, bufnr)
             end
 
             if opts.status_text.enabled then
@@ -199,7 +199,8 @@ M.update_lightbulb = function(config)
         },
         virtual_text = {
             enabled = false,
-            text = "💡"
+            text = "💡",
+            hl_mode = "replace"
         },
         status_text = {
             enabled = false,
