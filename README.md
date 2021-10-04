@@ -73,6 +73,8 @@ require'nvim-lightbulb'.update_lightbulb {
         enabled = false,
         -- Text to show at virtual text
         text = "💡",
+        -- highlight mode to use for virtual text (replace, combine, blend), see :help nvim_buf_set_extmark() for reference
+        hl_mode = "replace",
     },
     status_text = {
         enabled = false,
