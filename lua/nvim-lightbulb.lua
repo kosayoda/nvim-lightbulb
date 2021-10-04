@@ -152,7 +152,7 @@ local function handler_factory(opts, line, bufnr)
                 _update_sign(opts.sign.priority, vim.b.lightbulb_line, nil, bufnr)
             end
             if opts.virtual_text.enabled then
-                _update_virtual_text(opts.virtual_text.text, nil, bufnr)
+                _update_virtual_text(opts.virtual_text, nil, bufnr)
             end
             if opts.status_text.enabled then
                 _update_status_text(opts.status_text.text_unavailable, bufnr)
