@@ -186,6 +186,18 @@ M.get_status_text = function(bufnr)
 end
 
 M.update_lightbulb = function(config)
+    -- Check for code action capability
+    local code_action_cap_found = false
+    for _, client in ipairs(vim.lsp.buf_get_clients()) do
+        if client.resolved_capabilities.code_action then
+            code_action_cap_found = true
+            break
+        end
+    end
+    if not code_action_cap_found then
+        return
+    end
+
     config = config or {}
     local opts = {
         sign = {
