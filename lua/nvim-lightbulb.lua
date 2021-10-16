@@ -189,7 +189,7 @@ M.update_lightbulb = function(config)
     -- Check for code action capability
     local code_action_cap_found = false
     for _, client in ipairs(vim.lsp.buf_get_clients()) do
-        if client.resolved_capabilities.code_action then
+        if client.supports_method("textDocument/codeAction") then
             code_action_cap_found = true
             break
         end
