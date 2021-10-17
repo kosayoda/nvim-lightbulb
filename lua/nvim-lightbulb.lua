@@ -141,13 +141,18 @@ local function handler_factory(opts, line, bufnr)
     --- See lsp-handler for more information.
     ---
     --- @private
-    local function code_action_handler(err, actions)
-        -- The request returns an error
-        if err then
-            return
+    local function code_action_handler(responses)
+        -- Check for available code actions from all LSP server responses
+        local has_actions = false
+        for _, resp in pairs(responses) do
+            if resp.result and not vim.tbl_isempty(resp.result) then
+                has_actions = true
+                break
+            end
         end
+
         -- No available code actions
-        if actions == nil or vim.tbl_isempty(actions) then
+        if not has_actions then
             if opts.sign.enabled then
                 _update_sign(opts.sign.priority, vim.b.lightbulb_line, nil, bufnr)
             end
@@ -248,7 +253,7 @@ M.update_lightbulb = function(config)
     local params = lsp_util.make_range_params()
     params.context = context
     local bufnr = vim.api.nvim_get_current_buf()
-    vim.lsp.buf_request(
+    vim.lsp.buf_request_all(
         0, 'textDocument/codeAction', params, handler_factory(opts, params.range.start.line, bufnr)
     )
 end
