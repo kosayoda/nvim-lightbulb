@@ -144,8 +144,8 @@ local function handler_factory(opts, line, bufnr)
     local function code_action_handler(responses)
         -- Check for available code actions from all LSP server responses
         local has_actions = false
-        for _, resp in pairs(responses) do
-            if resp.result and not vim.tbl_isempty(resp.result) then
+        for client_id, resp in pairs(responses) do
+            if resp.result and not opts.ignore[client_id] and not vim.tbl_isempty(resp.result) then
                 has_actions = true
                 break
             end
@@ -191,18 +191,6 @@ M.get_status_text = function(bufnr)
 end
 
 M.update_lightbulb = function(config)
-    -- Check for code action capability
-    local code_action_cap_found = false
-    for _, client in ipairs(vim.lsp.buf_get_clients()) do
-        if client.supports_method("textDocument/codeAction") then
-            code_action_cap_found = true
-            break
-        end
-    end
-    if not code_action_cap_found then
-        return
-    end
-
     config = config or {}
     local opts = {
         sign = {
@@ -223,8 +211,35 @@ M.update_lightbulb = function(config)
             enabled = false,
             text = "💡",
             text_unavailable = ""
-        }
+        },
+        ignore = {},
     }
+
+    -- Key: client.name
+    -- Value: true if ignore
+    local ignored_clients = {}
+    if config.ignore then
+      for _, client in ipairs(config.ignore) do
+        ignored_clients[client] = true
+      end
+    end
+
+    -- Check for code action capability
+    local code_action_cap_found = false
+    for _, client in ipairs(vim.lsp.buf_get_clients()) do
+        if client.supports_method("textDocument/codeAction") then
+            -- If it is ignored, add the id to the ignore table for the handler
+            if ignored_clients[client.name] then
+              opts.ignore[client.id] = true
+            else
+              -- Otherwise we have found a capable client
+              code_action_cap_found = true
+            end
+        end
+    end
+    if not code_action_cap_found then
+        return
+    end
 
     -- Backwards compatibility
     opts.sign.priority = config.sign_priority or opts.sign.priority

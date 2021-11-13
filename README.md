@@ -44,6 +44,9 @@ vim.cmd [[autocmd CursorHold,CursorHoldI * lua require'nvim-lightbulb'.update_li
 ```lua
 -- Showing defaults
 require'nvim-lightbulb'.update_lightbulb {
+    -- LSP client names to ignore
+    -- Example: {"sumneko_lua", "null-ls"}
+    ignore = {},
     sign = {
         enabled = true,
         -- Priority of the gutter sign
