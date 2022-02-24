@@ -192,7 +192,7 @@ end
 
 M.update_lightbulb = function(config)
     config = config or {}
-    local opts = require("config").build(config)
+    local opts = require("nvim-lightbulb.config").build(config)
 
     -- Key: client.name
     -- Value: true if ignore
@@ -256,7 +256,7 @@ end
 --- @param opts table: Partial or full configuration opts. Keys: sign, float, virtual_text, status_text, ignore
 M.setup = function(opts)
   opts = opts or {}
-  require("config").set_defaults(opts)
+  require("nvim-lightbulb.config").set_defaults(opts)
 end
 
 return M
