@@ -192,28 +192,7 @@ end
 
 M.update_lightbulb = function(config)
     config = config or {}
-    local opts = {
-        sign = {
-            enabled = true,
-            priority = 10,
-        },
-        float = {
-            enabled = false,
-            text = "💡",
-            win_opts = {},
-        },
-        virtual_text = {
-            enabled = false,
-            text = "💡",
-            hl_mode = "replace"
-        },
-        status_text = {
-            enabled = false,
-            text = "💡",
-            text_unavailable = ""
-        },
-        ignore = {},
-    }
+    local opts = require("config").build(config)
 
     -- Key: client.name
     -- Value: true if ignore
@@ -271,6 +250,13 @@ M.update_lightbulb = function(config)
     vim.lsp.buf_request_all(
         0, 'textDocument/codeAction', params, handler_factory(opts, params.range.start.line, bufnr)
     )
+end
+
+--- Setup function that configures the defaults.
+--- @param opts table: Partial or full configuration opts. Keys: sign, float, virtual_text, status_text, ignore
+M.setup = function(opts)
+  opts = opts or {}
+  require("config").set_defaults(opts)
 end
 
 return M
