@@ -205,14 +205,16 @@ M.update_lightbulb = function(config)
 
     -- Check for code action capability
     local code_action_cap_found = false
-    for _, client in ipairs(vim.lsp.buf_get_clients()) do
-        if client.supports_method("textDocument/codeAction") then
-            -- If it is ignored, add the id to the ignore table for the handler
-            if ignored_clients[client.name] then
-              opts.ignore[client.id] = true
-            else
-              -- Otherwise we have found a capable client
-              code_action_cap_found = true
+    for _, client in pairs(vim.lsp.buf_get_clients()) do
+        if client then
+            if client.supports_method("textDocument/codeAction") then
+                -- If it is ignored, add the id to the ignore table for the handler
+                if ignored_clients[client.name] then
+                  opts.ignore[client.id] = true
+                else
+                  -- Otherwise we have found a capable client
+                  code_action_cap_found = true
+                end
             end
         end
     end
