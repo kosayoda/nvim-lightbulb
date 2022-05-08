@@ -37,6 +37,13 @@ Lua:
 vim.cmd [[autocmd CursorHold,CursorHoldI * lua require'nvim-lightbulb'.update_lightbulb()]]
 ```
 
+It is also possible to let the plugin create this autocommand for you. This can be enabled using the `setup` function:
+
+```lua
+require('nvim-lightbulb).setup({autocmd = {enabled = true}})
+```
+
+For all options, see the Configuration section.
 
 ### Configuration
 
@@ -88,6 +95,13 @@ require'nvim-lightbulb'.setup {
         text = "💡",
         -- Text to provide when no actions are available
         text_unavailable = ""
+    }
+    autocmd = {
+        enabled = false,
+        -- see :help autocmd-pattern
+        pattern = {"*"},
+        -- see :help autocmd-events
+        events = {"CursorHold", "CursorHoldI"}
     }
 }
 ```
