@@ -33,14 +33,7 @@ local default_opts = {
 --- @param pattern table: Same as pattern key in opts param of vim.api.nvim_create_augroup
 local _create_autocmd = function(events, pattern)
 	-- can be deleted when wished to drop support for versions below 0.7
-	if not vim.fn.has("nvim-0.7") then
-		vim.cmd(string.format([[
-			augroup LightBulb
-				autocmd!
-				autocmd %s %s lua require('nvim-lightbulb').update_lightbulb()
-			augroup end
-		]], table.concat(events, ","), table.concat(pattern, ",")))
-	else
+	if vim.fn.has("nvim-0.7") == 1 then
 		local id = vim.api.nvim_create_augroup("LightBulb", {})
 		vim.api.nvim_create_autocmd(events, {
 			pattern = pattern,
@@ -48,6 +41,13 @@ local _create_autocmd = function(events, pattern)
 			desc = "lua require('nvim-lightbulb').update_lightbulb()",
 			callback = require("nvim-lightbulb").update_lightbulb
 		})
+	else
+		vim.cmd(string.format([[
+			augroup LightBulb
+				autocmd!
+				autocmd %s %s lua require('nvim-lightbulb').update_lightbulb()
+			augroup end
+		]], table.concat(events, ","), table.concat(pattern, ",")))
 	end
 end
 
