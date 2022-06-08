@@ -15,6 +15,7 @@ This makes code actions both [discoverable and efficient](https://rust-analyzer.
 
 ### Prerequisites
 - [neovim](https://github.com/neovim/neovim) with LSP capabilities.
+- The [FixCursorHold.nvim plugin](https://github.com/antoinemadec/FixCursorHold.nvim) is strongly recommended to work around existing Neovim issues surrounding the `CursorHold` and `CursorHoldI` autocmd events.
 
 ### Installation
 Just like any other plugin.
@@ -22,6 +23,15 @@ Just like any other plugin.
 Example using [vim-plug](https://github.com/junegunn/vim-plug):
 ```vim
 Plug 'kosayoda/nvim-lightbulb'
+Plug 'antoinemadec/FixCursorHold.nvim'
+```
+
+Example using [packer.nvim](https://github.com/wbthomason/packer.nvim):
+```lua
+use {
+    'kosayoda/nvim-lightbulb',
+    requires = 'antoinemadec/FixCursorHold.nvim',
+}
 ```
 
 ### Usage
