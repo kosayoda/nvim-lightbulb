@@ -105,7 +105,7 @@ require('nvim-lightbulb').setup({
         text = "💡",
         -- Text to provide when no actions are available
         text_unavailable = ""
-    }
+    },
     autocmd = {
         enabled = false,
         -- see :help autocmd-pattern
