@@ -44,7 +44,10 @@ autocmd CursorHold,CursorHoldI * lua require('nvim-lightbulb').update_lightbulb(
 
 Lua:
 ```lua
-vim.cmd [[autocmd CursorHold,CursorHoldI * lua require('nvim-lightbulb').update_lightbulb()]]
+    vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
+        pattern = "*",
+        callback = function() require("nvim-lightbulb").update_lightbulb() end,
+    })
 ```
 
 It is also possible to let the plugin create this autocommand for you. This can be enabled using the `setup` function:
