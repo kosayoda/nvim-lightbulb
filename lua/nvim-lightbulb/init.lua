@@ -197,8 +197,8 @@ M.update_lightbulb = function(config)
   -- Key: client.name
   -- Value: true if ignore
   local ignored_clients = {}
-  if config.ignore then
-    for _, client in ipairs(config.ignore) do
+  if opts.ignore then
+    for _, client in ipairs(opts.ignore) do
       ignored_clients[client] = true
     end
   end
@@ -223,25 +223,25 @@ M.update_lightbulb = function(config)
   end
 
   -- Backwards compatibility
-  opts.sign.priority = config.sign_priority or opts.sign.priority
+  opts.sign.priority = opts.sign_priority or opts.sign.priority
 
   -- Sign configuration
-  for k, v in pairs(config.sign or {}) do
+  for k, v in pairs(opts.sign or {}) do
     opts.sign[k] = v
   end
 
   -- Float configuration
-  for k, v in pairs(config.float or {}) do
+  for k, v in pairs(opts.float or {}) do
     opts.float[k] = v
   end
 
   -- Virtual text configuration
-  for k, v in pairs(config.virtual_text or {}) do
+  for k, v in pairs(opts.virtual_text or {}) do
     opts.virtual_text[k] = v
   end
 
   -- Status text configuration
-  for k, v in pairs(config.status_text or {}) do
+  for k, v in pairs(opts.status_text or {}) do
     opts.status_text[k] = v
   end
 
