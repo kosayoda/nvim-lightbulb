@@ -144,7 +144,7 @@ local function handler_factory(opts, line, bufnr)
     -- Check for available code actions from all LSP server responses
     local has_actions = false
     for client_id, resp in pairs(responses) do
-      if resp.result and not opts.ignore[client_id] and not vim.tbl_isempty(resp.result) then
+      if resp.result and not opts.ignore_id[client_id] and not vim.tbl_isempty(resp.result) then
         has_actions = true
         break
       end
@@ -192,6 +192,7 @@ end
 M.update_lightbulb = function(config)
   config = config or {}
   local opts = require("nvim-lightbulb.config").build(config)
+  opts.ignore_id = {}
 
   -- Key: client.name
   -- Value: true if ignore
@@ -209,7 +210,7 @@ M.update_lightbulb = function(config)
       if client.supports_method("textDocument/codeAction") then
         -- If it is ignored, add the id to the ignore table for the handler
         if ignored_clients[client.name] then
-          opts.ignore[client.id] = true
+          opts.ignore_id[client.id] = true
         else
           -- Otherwise we have found a capable client
           code_action_cap_found = true
