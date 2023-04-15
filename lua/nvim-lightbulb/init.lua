@@ -144,7 +144,7 @@ local function handler_factory(opts, line, bufnr)
     -- Check for available code actions from all LSP server responses
     local has_actions = false
     for client_id, resp in pairs(responses) do
-      if resp.result and not opts.ignore[client_id] and not vim.tbl_isempty(resp.result) then
+      if resp.result and not opts.ignore_id[client_id] and not vim.tbl_isempty(resp.result) then
         has_actions = true
         break
       end
@@ -192,12 +192,13 @@ end
 M.update_lightbulb = function(config)
   config = config or {}
   local opts = require("nvim-lightbulb.config").build(config)
+  opts.ignore_id = {}
 
   -- Key: client.name
   -- Value: true if ignore
   local ignored_clients = {}
-  if config.ignore then
-    for _, client in ipairs(config.ignore) do
+  if opts.ignore then
+    for _, client in ipairs(opts.ignore) do
       ignored_clients[client] = true
     end
   end
@@ -209,7 +210,7 @@ M.update_lightbulb = function(config)
       if client.supports_method("textDocument/codeAction") then
         -- If it is ignored, add the id to the ignore table for the handler
         if ignored_clients[client.name] then
-          opts.ignore[client.id] = true
+          opts.ignore_id[client.id] = true
         else
           -- Otherwise we have found a capable client
           code_action_cap_found = true
@@ -222,25 +223,25 @@ M.update_lightbulb = function(config)
   end
 
   -- Backwards compatibility
-  opts.sign.priority = config.sign_priority or opts.sign.priority
+  opts.sign.priority = opts.sign_priority or opts.sign.priority
 
   -- Sign configuration
-  for k, v in pairs(config.sign or {}) do
+  for k, v in pairs(opts.sign or {}) do
     opts.sign[k] = v
   end
 
   -- Float configuration
-  for k, v in pairs(config.float or {}) do
+  for k, v in pairs(opts.float or {}) do
     opts.float[k] = v
   end
 
   -- Virtual text configuration
-  for k, v in pairs(config.virtual_text or {}) do
+  for k, v in pairs(opts.virtual_text or {}) do
     opts.virtual_text[k] = v
   end
 
   -- Status text configuration
-  for k, v in pairs(config.status_text or {}) do
+  for k, v in pairs(opts.status_text or {}) do
     opts.status_text[k] = v
   end
 
