@@ -26,6 +26,7 @@ local default_opts = {
     pattern = { "*" },
   },
   ignore = {},
+  quickfix_only = false,
 }
 
 --- Create augroup and autocmd that calls update_lightbulb

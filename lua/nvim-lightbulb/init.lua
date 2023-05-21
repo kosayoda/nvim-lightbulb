@@ -145,8 +145,17 @@ local function handler_factory(opts, line, bufnr)
     local has_actions = false
     for client_id, resp in pairs(responses) do
       if resp.result and not opts.ignore_id[client_id] and not vim.tbl_isempty(resp.result) then
-        has_actions = true
-        break
+        if opts.quickfix_only then
+          for _, action in ipairs(resp.result) do
+            if action.edit and action.kind and action.kind == "quickfix" then
+              has_actions = true
+              break
+            end
+          end
+        else
+          has_actions = true
+          break
+        end
       end
     end
 

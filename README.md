@@ -113,6 +113,8 @@ require('nvim-lightbulb').setup({
         -- see :help autocmd-events
         events = {"CursorHold", "CursorHoldI"}
     }
+    -- Only show the lightbulb if the code action is a "quickfix" action (blue lightbulb in VSCode)
+    quickfix_only = false,
 })
 ```
 
