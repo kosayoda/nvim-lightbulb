@@ -1,0 +1,5 @@
+NvimLightbulb.get_status_text()	nvim-lightbulb.txt	/*NvimLightbulb.get_status_text()*
+NvimLightbulb.setup()	nvim-lightbulb.txt	/*NvimLightbulb.setup()*
+NvimLightbulb.update_lightbulb()	nvim-lightbulb.txt	/*NvimLightbulb.update_lightbulb()*
+nvim-lightbulb	nvim-lightbulb.txt	/*nvim-lightbulb*
+nvim-lightbulb-config	nvim-lightbulb.txt	/*nvim-lightbulb-config*

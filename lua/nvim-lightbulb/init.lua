@@ -1,145 +1,161 @@
-local vim = vim
+---
+--- *nvim-lightbulb*: VSCode 💡 for neovim's built-in LSP.
+---
+--- --- Quickstart ---
+---
+--- Place this in your neovim configuration.
+--- >
+---   require("nvim_lightbulb").setup({
+---     autocmd = { enabled = true }
+---   })
+---
+--- See |nvim-lightbulb-config| for available config settings.
+---
+---
+--- --- Modify Highlights ---
+---
+--- To modify highlights, configure the corresponding highlight group either
+--- - After |NvimLightbulb.setup|
+--- - Before |NvimLightbulb.setup| if the `link_highlights` option is set to `false`
+---
+--- Example:
+--- >
+---    require("nvim-lightbulb").setup()
+---    vim.api.nvim_set_hl(0, "LightBulbSign", {link = "DiagnosticSignWarn"})
+---@tag nvim-lightbulb
+
 local lsp_util = require("vim.lsp.util")
-local M = {}
+local lightbulb_config = require("nvim-lightbulb.config")
 
-local SIGN_GROUP = "nvim-lightbulb"
-local SIGN_NAME = "LightBulbSign"
-local LIGHTBULB_FLOAT_HL = "LightBulbFloatWin"
-local LIGHTBULB_VIRTUAL_TEXT_HL = "LightBulbVirtualText"
-local LIGHTBULB_VIRTUAL_TEXT_NS = vim.api.nvim_create_namespace("nvim-lightbulb")
+local NvimLightbulb = {}
 
--- Set default sign
-if vim.tbl_isempty(vim.fn.sign_getdefined(SIGN_NAME)) then
-  vim.fn.sign_define(SIGN_NAME, { text = "💡", texthl = "LspDiagnosticsDefaultInformation" })
+local LIGHTBULB_NS = vim.api.nvim_create_namespace("nvim-lightbulb")
+
+--- Module setup.
+---
+--- Optional. Any configuration can also be passed to |NvimLightbulb.update_lightbulb|.
+---
+---@param config table|nil Partial or full configuration table. See |nvim-lightbulb-config|.
+---
+---@usage `require('nvim-lightbulb').setup({})`
+NvimLightbulb.setup = function(config)
+  _G.NvimLightbulb = NvimLightbulb
+  lightbulb_config.set_defaults(config)
 end
 
---- Update lightbulb float.
+--- Update the lightbulb float.
 ---
---- @param opts table Available options for the float handler
---- @param bufnr number|nil Buffer handle
+---@param opts table Partial or full configuration table. See |nvim-lightbulb-config|.
+---@param position table<string, integer>|nil The position to update the extmark to. If nil, removes the extmark.
+---@param bufnr integer The buffer to update the float in.
 ---
---- @private
-local function _update_float(opts, bufnr)
-  bufnr = bufnr or vim.api.nvim_get_current_buf()
-  -- prevent `open_floating_preview` close the previous floating window
-  vim.api.nvim_buf_set_var(bufnr, "lsp_floating_preview", nil)
+---@private
+local function update_float(opts, position, bufnr)
+  -- Extract float options
+  opts = opts.float
 
-  -- check if another lightbulb floating window already exists for this buffer
-  -- and close it if needed
-  local existing_float = vim.F.npcall(vim.api.nvim_buf_get_var, bufnr, "lightbulb_floating_window")
+  if not opts.enabled or position == nil then
+    return
+  end
+
+  -- Prevent `open_floating_preview` from closing the previous floating window
+  -- Cache the value to restore it later
+  local lsp_win = vim.b[bufnr].lsp_floating_preview
+  vim.b[bufnr].lsp_floating_preview = nil
+
+  -- Check if another lightbulb floating window already exists for this buffer and close it
+  local existing_float = vim.b[bufnr].lightbulb_floating_window
   if existing_float and vim.api.nvim_win_is_valid(existing_float) then
     vim.api.nvim_win_close(existing_float, true)
   end
 
-  local _, win = lsp_util.open_floating_preview({ opts.text }, "plaintext", opts.win_opts)
-  vim.api.nvim_win_set_option(win, "winhl", "Normal:" .. LIGHTBULB_FLOAT_HL)
+  -- Open the window and set highlight
+  local _, lightbulb_win = lsp_util.open_floating_preview({ opts.text }, "plaintext", opts.win_opts)
+  vim.api.nvim_win_set_option(lightbulb_win, "winhl", "Normal:" .. opts.hl)
 
-  -- Manually anchor float because `open_floating_preview` doesn't support that option
-  if opts.win_opts["anchor"] ~= nil then
-    vim.api.nvim_win_set_config(win, { anchor = opts.win_opts.anchor })
-  end
-
+  -- Set float transparency
   if opts.win_opts["winblend"] ~= nil then
-    vim.api.nvim_win_set_option(win, "winblend", opts.win_opts.winblend)
+    vim.api.nvim_win_set_option(lightbulb_win, "winblend", opts.win_opts.winblend)
   end
 
-  vim.api.nvim_buf_set_var(bufnr, "lightbulb_floating_window", win)
+  vim.b[bufnr].lightbulb_floating_window = lightbulb_win
+  vim.b[bufnr].lsp_floating_preview = lsp_win
 end
 
---- Update sign position from `old_line` to `new_line`.
+--- Update the lightbulb status text.
 ---
---- Either line can be optional, and will result in just adding/removing
---- the sign on the given line.
+---@param opts table Partial or full configuration table. See |nvim-lightbulb-config|.
+---@param position table<string, integer>|nil The position to update the extmark to. If nil, removes the extmark.
+---@param bufnr integer The buffer to update the float in.
 ---
---- @param priority number The priority of the sign to add
---- @param old_line number|nil The line to remove the sign on
---- @param new_line number|nil The line to add the sign on
---- @param bufnr number|nil Buffer handle
----
---- @private
-local function _update_sign(priority, old_line, new_line, bufnr)
-  bufnr = bufnr or "%"
-
-  if old_line then
-    vim.fn.sign_unplace(
-      SIGN_GROUP, { id = old_line, buffer = bufnr }
-    )
-
-    -- Update current lightbulb line
-    vim.b.lightbulb_line = nil
+---@private
+local function update_status_text(opts, position, bufnr)
+  if not opts.status_text.enabled then
+    return
   end
 
-  -- Avoid redrawing lightbulb if code action line did not change
-  if new_line and (vim.b.lightbulb_line ~= new_line) then
-    vim.fn.sign_place(
-      new_line, SIGN_GROUP, SIGN_NAME, bufnr,
-      { lnum = new_line, priority = priority }
-    )
-    -- Update current lightbulb line
-    vim.b.lightbulb_line = new_line
+  if position == nil then
+    vim.b[bufnr].current_lightbulb_status_text = opts.status_text.text_unavailable
+  else
+    vim.b[bufnr].current_lightbulb_status_text = opts.status_text.text
   end
 end
 
---- Update lightbulb virtual text.
+--- Update the lightbulb extmark.
 ---
---- @param opts table Available options for the virtual text handler
---- @param line number|nil The line to add the virtual text
---- @param bufnr number|nil Buffer handle
+---@param opts table Partial or full configuration table. See |nvim-lightbulb-config|.
+---@param position table<string, integer>|nil The position to update the extmark to. If nil, removes the extmark.
+---@param bufnr integer The buffer to update the float in.
 ---
---- @private
-local function _update_virtual_text(opts, line, bufnr)
-  bufnr = bufnr or vim.api.nvim_get_current_buf()
-  vim.api.nvim_buf_clear_namespace(bufnr, LIGHTBULB_VIRTUAL_TEXT_NS, 0, -1)
+---@private
+local function update_extmark(opts, position, bufnr)
+  local sign_enabled = opts.sign.enabled
+  local virt_text_enabled = opts.virtual_text.enabled
 
-  if line then
-    vim.api.nvim_buf_set_extmark(
-      bufnr, LIGHTBULB_VIRTUAL_TEXT_NS, line, -1, { virt_text = { { opts.text, LIGHTBULB_VIRTUAL_TEXT_HL } }, hl_mode = opts.hl_mode }
-    )
-  end
-end
-
---- Update lightbulb status text
----
---- @param text string The new status text
---- @param bufnr number|nil Buffer handle
----
-local function _update_status_text(text, bufnr)
-  bufnr = bufnr or vim.api.nvim_get_current_buf()
-  vim.api.nvim_buf_set_var(bufnr, 'current_lightbulb_status_text', text)
-end
-
---- Patch for breaking neovim master update to LSP handlers
---- See: https://github.com/neovim/neovim/issues/14090#issuecomment-913198455
-local function mk_handler(fn)
-  return function(...)
-    local config_or_client_id = select(4, ...)
-    local is_new = type(config_or_client_id) ~= 'number'
-    if is_new then
-      fn(...)
-    else
-      local err = select(1, ...)
-      local method = select(2, ...)
-      local result = select(3, ...)
-      local client_id = select(4, ...)
-      local bufnr = select(5, ...)
-      local config = select(6, ...)
-      fn(err, result, { method = method, client_id = client_id, bufnr = bufnr }, config)
+  local extmark_id = vim.b[bufnr].lightbulb_extmark
+  if not (sign_enabled or virt_text_enabled) or position == nil then
+    if extmark_id ~= nil then
+      vim.api.nvim_buf_del_extmark(bufnr, LIGHTBULB_NS, extmark_id)
     end
+    return
   end
+
+  local extmark_opts = {
+    id = extmark_id,
+    priority = opts.priority,
+    -- If true, breaks empty files
+    strict = false,
+    -- Sign configuration
+    sign_text = sign_enabled and opts.sign.text or nil,
+    sign_hl_group = sign_enabled and opts.sign.hl or nil,
+    -- Virtual text configuration
+    virt_text = virt_text_enabled and { { opts.virtual_text.text, opts.virtual_text.hl } } or nil,
+    virt_text_pos = (virt_text_enabled and type(opts.virtual_text.pos) == "string") and opts.virtual_text.pos or nil,
+    virt_text_win_col = (virt_text_enabled and type(opts.virtual_text.pos) == "number") and opts.virtual_text.pos
+      or nil,
+    hl_mode = virt_text_enabled and opts.virtual_text.hl_mode or nil,
+    -- Number configuration
+    number_hl_group = opts.number.enabled and opts.number.hl or nil,
+    -- Line configuration
+    line_hl_group = opts.line.enabled and opts.line.hl or nil,
+  }
+  vim.b[bufnr].lightbulb_extmark =
+    vim.api.nvim_buf_set_extmark(bufnr, LIGHTBULB_NS, position.line, position.col + 1, extmark_opts)
 end
 
 --- Handler factory to keep track of current lightbulb line.
 ---
---- @param line number The line when the the code action request is called
---- @param opts table Options passed when `update_lightbulb` is called
---- @param bufnr number|nil Buffer handle
---- @private
-local function handler_factory(opts, line, bufnr)
+---@param opts table Options passed when `update_lightbulb` is called
+---@param position table Position of the cursor when lightbulb is called, like {line = 0, col = 0}
+---@param bufnr number Buffer handle
+---
+---@private
+local function handler_factory(opts, position, bufnr)
   --- Handler for textDocument/codeAction.
+  --- Note: This is not an |lsp-handler| because we use vim.lsp.buf_request_all and not vim.lsp.buf_request
   ---
-  --- See lsp-handler for more information.
-  ---
-  --- @private
+  ---@param responses table Map of client_id:request_result.
+  ---@private
   local function code_action_handler(responses)
     -- Check for available code actions from all LSP server responses
     local has_actions = false
@@ -150,71 +166,71 @@ local function handler_factory(opts, line, bufnr)
       end
     end
 
-    -- No available code actions
-    if not has_actions then
-      if opts.sign.enabled then
-        _update_sign(opts.sign.priority, vim.b.lightbulb_line, nil, bufnr)
-      end
-      if opts.virtual_text.enabled then
-        _update_virtual_text(opts.virtual_text, nil, bufnr)
-      end
-      if opts.status_text.enabled then
-        _update_status_text(opts.status_text.text_unavailable, bufnr)
-      end
-    else
-      if opts.sign.enabled then
-        _update_sign(opts.sign.priority, vim.b.lightbulb_line, line + 1, bufnr)
-      end
-
-      if opts.float.enabled then
-        _update_float(opts.float, bufnr)
-      end
-
-      if opts.virtual_text.enabled then
-        _update_virtual_text(opts.virtual_text, line, bufnr)
-      end
-
-      if opts.status_text.enabled then
-        _update_status_text(opts.status_text.text, bufnr)
-      end
-    end
-
+    local pos = has_actions and position or nil
+    update_extmark(opts, pos, bufnr)
+    update_status_text(opts, pos, bufnr)
+    update_float(opts, pos, bufnr)
   end
 
-  return mk_handler(code_action_handler)
+  return code_action_handler
 end
 
-M.get_status_text = function(bufnr)
+---
+--- Get the configured text according to lightbulb status.
+--- Any configuration provided overrides the defaults passed to |NvimLightbulb.setup|.
+---
+---@param bufnr number|nil Buffer handle. Defaults to current buffer.
+---
+---@usage `require('nvim-lightbulb').get_status_text()`
+NvimLightbulb.get_status_text = function(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   return vim.F.npcall(vim.api.nvim_buf_get_var, bufnr, "current_lightbulb_status_text") or ""
 end
 
-M.update_lightbulb = function(config)
-  config = config or {}
-  local opts = require("nvim-lightbulb.config").build(config)
+NvimLightbulb.clear_lightbulb = function(bufnr)
+  local extmark_id = vim.b[bufnr].lightbulb_extmark
+  if extmark_id ~= nil then
+    vim.api.nvim_buf_del_extmark(bufnr, LIGHTBULB_NS, extmark_id)
+  end
+end
+
+---
+--- Display the lightbulb according to configuration.
+--- Any configuration provided overrides the defaults passed to |NvimLightbulb.setup|.
+---
+---@param config table|nil Partial or full configuration table. See |nvim-lightbulb-config|.
+---
+---@usage `require('nvim-lightbulb').update_lightbulb({})`
+NvimLightbulb.update_lightbulb = function(config)
+  local opts = lightbulb_config.build(config, false)
   opts.ignore_id = {}
+
+  -- Return if the filetype is ignored
+  if vim.tbl_contains(opts.ignore.ft, vim.bo.filetype) then
+    return
+  end
 
   -- Key: client.name
   -- Value: true if ignore
   local ignored_clients = {}
-  if opts.ignore then
-    for _, client in ipairs(opts.ignore) do
+  if opts.ignore.clients then
+    for _, client in ipairs(opts.ignore.clients) do
       ignored_clients[client] = true
     end
   end
 
+  local bufnr = vim.api.nvim_get_current_buf()
+
   -- Check for code action capability
   local code_action_cap_found = false
-  for _, client in pairs(vim.lsp.buf_get_clients()) do
-    if client then
-      if client.supports_method("textDocument/codeAction") then
-        -- If it is ignored, add the id to the ignore table for the handler
-        if ignored_clients[client.name] then
-          opts.ignore_id[client.id] = true
-        else
-          -- Otherwise we have found a capable client
-          code_action_cap_found = true
-        end
+  for _, client in pairs(vim.lsp.get_active_clients({ bufnr = bufnr })) do
+    if client and client.supports_method("textDocument/codeAction") then
+      -- If it is ignored, add the id to the ignore table for the handler
+      if ignored_clients[client.name] then
+        opts.ignore_id[client.id] = true
+      else
+        -- Otherwise we have found a capable client
+        code_action_cap_found = true
       end
     end
   end
@@ -222,43 +238,21 @@ M.update_lightbulb = function(config)
     return
   end
 
-  -- Backwards compatibility
-  opts.sign.priority = opts.sign_priority or opts.sign.priority
-
-  -- Sign configuration
-  for k, v in pairs(opts.sign or {}) do
-    opts.sign[k] = v
+  -- Send the LSP request, canceling the previous one if necessary
+  if vim.b[bufnr].lightbulb_lsp_cancel then
+    vim.b[bufnr].lightbulb_lsp_cancel()
   end
-
-  -- Float configuration
-  for k, v in pairs(opts.float or {}) do
-    opts.float[k] = v
-  end
-
-  -- Virtual text configuration
-  for k, v in pairs(opts.virtual_text or {}) do
-    opts.virtual_text[k] = v
-  end
-
-  -- Status text configuration
-  for k, v in pairs(opts.status_text or {}) do
-    opts.status_text[k] = v
-  end
-
   local context = { diagnostics = vim.lsp.diagnostic.get_line_diagnostics() }
+  context.only = opts.action_kinds
+
   local params = lsp_util.make_range_params()
   params.context = context
-  local bufnr = vim.api.nvim_get_current_buf()
-  vim.lsp.buf_request_all(
-    0, 'textDocument/codeAction', params, handler_factory(opts, params.range.start.line, bufnr)
-  )
+  local position = {
+    line = params.range.start.line,
+    col = params.range.start.character,
+  }
+  vim.b[bufnr].lightbulb_lsp_cancel =
+    vim.lsp.buf_request_all(bufnr, "textDocument/codeAction", params, handler_factory(opts, position, bufnr))
 end
 
---- Setup function that configures the defaults.
---- @param opts table: Partial or full configuration opts. Keys: sign, float, virtual_text, status_text, ignore
-M.setup = function(opts)
-  opts = opts or {}
-  require("nvim-lightbulb.config").set_defaults(opts)
-end
-
-return M
+return NvimLightbulb
