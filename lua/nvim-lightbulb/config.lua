@@ -31,6 +31,13 @@ local default_config = {
   --   "never" disables config validation.
   validate_config = "auto",
 
+  -- Code action kinds to observe.
+  -- To match all code actions, set to `nil`.
+  -- Otherwise, set to a table of kinds.
+  -- Example: { "quickfix", "refactor.rewrite" }
+  -- See: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeActionKind
+  action_kinds = nil,
+
   -- Configuration for various handlers:
   -- 1. Sign column.
   sign = {
@@ -152,6 +159,7 @@ M.build = function(config, is_setup)
   vim.validate({
     hide_in_unfocused_buffer = { config.hide_in_unfocused_buffer, "boolean" },
     link_highlights = { config.link_highlights, "boolean" },
+    action_kinds = { config.action_kinds, "table", true },
     sign = { config.sign, "table" },
     virtual_text = { config.virtual_text, "table" },
     float = { config.float, "table" },

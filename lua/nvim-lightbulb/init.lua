@@ -240,6 +240,8 @@ NvimLightbulb.update_lightbulb = function(config)
     vim.b[bufnr].lightbulb_lsp_cancel()
   end
   local context = { diagnostics = vim.lsp.diagnostic.get_line_diagnostics() }
+  context.only = opts.action_kinds
+
   local params = lsp_util.make_range_params()
   params.context = context
   local position = {

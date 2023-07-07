@@ -98,6 +98,13 @@ Default values:
     --   "never" disables config validation.
     validate_config = "auto",
 
+    -- Code action kinds to observe.
+    -- To match all code actions, set to `nil`.
+    -- Otherwise, set to a table of kinds.
+    -- Example: { "quickfix", "refactor.rewrite" }
+    -- See: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeActionKind
+    action_kinds = nil,
+
     -- Configuration for various handlers:
     -- 1. Sign column.
     sign = {
