@@ -34,7 +34,7 @@ or, change the look of
 
 or, get a configured message
 
-6. as **status text**, retrievable with `require("nvim_lightbulb").get_status_text()`
+6. as **status text**, retrievable with `require("nvim-lightbulb").get_status_text()`
 
 ## Prerequisites
 
@@ -65,7 +65,7 @@ Plug 'kosayoda/nvim-lightbulb'
 Place this in your neovim configuration.
 
 ```lua
-require("nvim_lightbulb").setup({
+require("nvim-lightbulb").setup({
   autocmd = { enabled = true }
 })
 ```
