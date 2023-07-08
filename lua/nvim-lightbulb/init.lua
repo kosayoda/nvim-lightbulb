@@ -14,13 +14,11 @@
 ---
 --- --- Modify Highlights ---
 ---
---- To modify highlights, configure the corresponding highlight group either
---- - After |NvimLightbulb.setup|
---- - Before |NvimLightbulb.setup| if the `link_highlights` option is set to `false`
+--- To modify highlights, configure the corresponding highlight group.
+--- See |nvim-lightbulb-config| for a list of highlights used.
 ---
 --- Example:
 --- >
----    require("nvim-lightbulb").setup()
 ---    vim.api.nvim_set_hl(0, "LightBulbSign", {link = "DiagnosticSignWarn"})
 ---@tag nvim-lightbulb
 

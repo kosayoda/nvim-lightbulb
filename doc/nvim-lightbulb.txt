@@ -15,9 +15,8 @@ See |nvim-lightbulb-config| for available config settings.
 
 --- Modify Highlights ---
 
-To modify highlights, configure the corresponding highlight group either
-- After |NvimLightbulb.setup|
-- Before |NvimLightbulb.setup| if the `link_highlights` option is set to `false`
+To modify highlights, configure the corresponding highlight group.
+See |nvim-lightbulb-config| for a list of highlights used.
 
 Example:
 >
