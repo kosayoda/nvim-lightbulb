@@ -242,11 +242,11 @@ M.set_defaults = function(opts)
 
   -- Set up default highlight links
   if default_config.link_highlights then
-    vim.api.nvim_set_hl(0, "LightBulbSign", { link = "DiagnosticSignInfo" })
-    vim.api.nvim_set_hl(0, "LightBulbFloatWin", { link = "DiagnosticFloatingInfo" })
-    vim.api.nvim_set_hl(0, "LightBulbVirtualText", { link = "DiagnosticVirtualTextInfo" })
-    vim.api.nvim_set_hl(0, "LightBulbNumber", { link = "DiagnosticSignInfo" })
-    vim.api.nvim_set_hl(0, "LightBulbLine", { link = "CursorLine" })
+    vim.api.nvim_set_hl(0, "LightBulbSign", { default = true, link = "DiagnosticSignInfo" })
+    vim.api.nvim_set_hl(0, "LightBulbFloatWin", { default = true, link = "DiagnosticFloatingInfo" })
+    vim.api.nvim_set_hl(0, "LightBulbVirtualText", { default = true, link = "DiagnosticVirtualTextInfo" })
+    vim.api.nvim_set_hl(0, "LightBulbNumber", { default = true, link = "DiagnosticSignInfo" })
+    vim.api.nvim_set_hl(0, "LightBulbLine", { default = true, link = "CursorLine" })
   end
 end
 
