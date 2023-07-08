@@ -6,7 +6,7 @@
 
 Place this in your neovim configuration.
 >
-  require("nvim_lightbulb").setup({
+  require("nvim-lightbulb").setup({
     autocmd = { enabled = true }
   })
 
