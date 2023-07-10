@@ -250,4 +250,90 @@ M.set_defaults = function(opts)
   end
 end
 
+--- Get a prettified representation of the config in a format suitable for |nvim_echo|.
+---
+---@param opts table Configuration table. See |nvim-lightbulb-config|.
+---@return table # The prettified configuration
+---
+---@private
+M.pretty_format = function(opts)
+  local lines = {}
+
+  local F = {}
+
+  F.append = function(str, hl)
+    table.insert(lines, { str, hl })
+  end
+
+  F.format = function(value, indent, prefix)
+    indent = indent or 0
+    if prefix then
+      F.append(prefix)
+    end
+
+    if type(value) == "string" then
+      F.append(string.format("'%s'", value), "String")
+    elseif type(value) == "number" then
+      F.append(tostring(value), "Number")
+    elseif type(value) == "boolean" then
+      F.append(tostring(value), "Boolean")
+    elseif type(value) == "nil" then
+      F.append("nil", "Keyword")
+    elseif type(value) == "table" then
+      if vim.tbl_isempty(value) then
+        F.append("{}")
+      else
+        if vim.tbl_islist(value) then
+          F.format_list(value)
+        else
+          F.format_table(value, indent + 2)
+        end
+      end
+    else
+      F.append(string.format("<%s>", type(value)))
+    end
+  end
+
+  F.format_list = function(t)
+    F.append("{ ")
+    for idx, value in ipairs(t) do
+      if idx ~= 1 then
+        F.append(", ")
+      end
+      F.format(value)
+    end
+    F.append(" }")
+  end
+
+  F.format_table = function(t, indent)
+    indent = indent or 0
+
+    local idx = 0
+
+    local is_long = vim.tbl_count(t) > 3
+    local prefix = is_long and string.rep(" ", indent) or ""
+    local suffix = is_long and "\n" or " "
+
+    F.append("{" .. suffix)
+
+    for key, value in pairs(t) do
+      if idx ~= 0 then
+        F.append("," .. suffix)
+      end
+
+      idx = idx + 1
+
+      F.append(prefix .. key)
+      F.append(" = ", "Operator")
+      F.format(value, indent)
+    end
+
+    prefix = is_long and string.rep(" ", indent - 2) or ""
+    F.append(suffix .. prefix .. "}")
+  end
+
+  F.format(opts)
+  return lines
+end
+
 return M

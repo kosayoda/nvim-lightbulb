@@ -245,12 +245,172 @@ NvimLightbulb.update_lightbulb = function(config)
 
   local params = lsp_util.make_range_params()
   params.context = context
+
   local position = {
     line = params.range.start.line,
     col = params.range.start.character,
   }
   vim.b[bufnr].lightbulb_lsp_cancel =
     vim.lsp.buf_request_all(bufnr, "textDocument/codeAction", params, handler_factory(opts, position, bufnr))
+end
+
+---
+--- Display debug information related to nvim-lightbulb.
+--- Prints information about:
+--- - The current configuration
+--- - LSP servers found, ignored, supporting code actions...
+--- - Any code actions at the current location along with their code action kind
+---
+---@param config table|nil Partial or full configuration table. See |nvim-lightbulb-config|.
+---
+---@usage `require('nvim-lightbulb').debug({})`
+NvimLightbulb.debug = function(config)
+  local opts = lightbulb_config.build(config, false)
+  opts.ignore_id = {}
+
+  local chunks = {}
+  local function append(str, hl)
+    table.insert(chunks, { str, hl })
+  end
+  local function warn(str, hl)
+    append("! ", "DiagnosticWarn")
+    append(str, hl)
+  end
+  local function info(str, hl)
+    append("i ", "DiagnosticInfo")
+    append(str, hl)
+  end
+
+  append("[")
+  append("Configuration", "Special")
+  append("]\n")
+  vim.list_extend(chunks, lightbulb_config.pretty_format(opts))
+  append("\n")
+
+  append("\n[")
+  append("Code Actions", "Special")
+  append("]\n")
+
+  local run_code_actions = true
+
+  -- Return if the filetype is ignored
+  if vim.tbl_contains(opts.ignore.ft, vim.bo.filetype) then
+    warn("Filetype ignored: ")
+    append(vim.bo.filetype, "DiagnosticWarn")
+    append("\n")
+    run_code_actions = false
+  end
+
+  -- Key: client.name
+  -- Value: true if ignore
+  local ignored_clients = {}
+  if opts.ignore.clients then
+    for _, client in ipairs(opts.ignore.clients) do
+      ignored_clients[client] = true
+    end
+  end
+
+  -- Key: client.id
+  -- Value: client.name
+  local client_id_to_name = {}
+
+  local bufnr = vim.api.nvim_get_current_buf()
+
+  -- Check for code action capability
+  local no_code_action_servers = {}
+  local code_action_servers = {}
+  local ignored_servers = {}
+
+  for _, client in pairs(vim.lsp.get_active_clients({ bufnr = bufnr })) do
+    if client and client.supports_method("textDocument/codeAction") then
+      client_id_to_name[client.id] = client.name
+
+      -- If it is ignored, add the id to the ignore table for the handler
+      if ignored_clients[client.name] then
+        opts.ignore_id[client.id] = true
+        if #ignored_servers > 0 then
+          table.insert(ignored_servers, { ", " })
+        end
+        table.insert(ignored_servers, { client.name })
+      else
+        -- Otherwise we have found a capable client
+        if #code_action_servers > 0 then
+          table.insert(code_action_servers, { ", " })
+        end
+        table.insert(code_action_servers, { client.name })
+      end
+    else
+      if #no_code_action_servers > 0 then
+        table.insert(no_code_action_servers, { ", " })
+      end
+      table.insert(no_code_action_servers, { client.name })
+    end
+  end
+
+  if not vim.tbl_isempty(no_code_action_servers) then
+    info("  No code action support: ")
+    vim.list_extend(chunks, no_code_action_servers)
+    append("\n")
+  end
+
+  if vim.tbl_isempty(code_action_servers) then
+    warn("No allowed servers with code action support found\n")
+    run_code_actions = false
+  else
+    info("With code action support: ")
+    vim.list_extend(chunks, code_action_servers)
+    append("\n")
+  end
+
+  if not vim.tbl_isempty(ignored_servers) then
+    info("With support but ignored: ")
+    vim.list_extend(chunks, ignored_servers)
+    append("\n")
+  end
+
+  -- Send the LSP request
+  local context = { diagnostics = vim.lsp.diagnostic.get_line_diagnostics() }
+  context.only = opts.action_kinds
+
+  local params = lsp_util.make_range_params()
+  params.context = context
+
+  --- Handler for textDocument/codeAction.
+  --- Note: This is not an |lsp-handler| because we use vim.lsp.buf_request_all and not vim.lsp.buf_request
+  ---
+  ---@param responses table Map of client_id:request_result.
+  ---@private
+  local function code_action_handler(responses)
+    local has_actions = false
+
+    for client_id, resp in pairs(responses) do
+      if not opts.ignore_id[client_id] and resp.result and not vim.tbl_isempty(resp.result) then
+        has_actions = true
+
+        append("\n")
+        append(client_id_to_name[client_id] or "Unknown client", "Title")
+        append("\n")
+
+        for idx, r in pairs(resp.result) do
+          append(string.format("%d. %s", idx, r.title))
+          append(" " .. r.kind .. "\n", "Comment")
+        end
+      end
+    end
+
+    if not has_actions then
+      warn("No code actions found")
+    end
+
+    append("\n")
+    vim.api.nvim_echo(chunks, true, {})
+  end
+
+  if run_code_actions then
+    vim.lsp.buf_request_all(bufnr, "textDocument/codeAction", params, code_action_handler)
+  else
+    vim.api.nvim_echo(chunks, true, {})
+  end
 end
 
 return NvimLightbulb

@@ -1,3 +1,4 @@
+NvimLightbulb.debug()	nvim-lightbulb.txt	/*NvimLightbulb.debug()*
 NvimLightbulb.get_status_text()	nvim-lightbulb.txt	/*NvimLightbulb.get_status_text()*
 NvimLightbulb.setup()	nvim-lightbulb.txt	/*NvimLightbulb.setup()*
 NvimLightbulb.update_lightbulb()	nvim-lightbulb.txt	/*NvimLightbulb.update_lightbulb()*

@@ -73,6 +73,7 @@ require("nvim-lightbulb").setup({
 - Configuration can be passed to `NvimLightbulb.setup`, or to `NvimLightbulb.update_lightbulb`.
 - Any configuration passed to `update_lightbulb` will override the one in `setup`.
 - For all options, see the [Configuration](#configuration) section.
+- To debug `nvim-lightbulb` see `NvimLightbulb.debug`
 
 ## Configuration
 

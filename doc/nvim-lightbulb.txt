@@ -20,7 +20,6 @@ See |nvim-lightbulb-config| for a list of highlights used.
 
 Example:
 >
-   require("nvim-lightbulb").setup()
    vim.api.nvim_set_hl(0, "LightBulbSign", {link = "DiagnosticSignWarn"})
 
 ------------------------------------------------------------------------------
@@ -64,6 +63,24 @@ Parameters~
 
 Usage~
 `require('nvim-lightbulb').update_lightbulb({})`
+
+------------------------------------------------------------------------------
+                                                         *NvimLightbulb.debug()*
+
+                        `NvimLightbulb.debug`({config})
+
+Display debug information related to nvim-lightbulb.
+Prints information about:
+- The current configuration
+- LSP servers found, ignored, supporting code actions...
+- Any code actions at the current location along with their code action kind
+
+Parameters~
+{config} `(table|nil)` Partial or full configuration table. See |nvim-lightbulb-config|.
+
+Usage~
+`require('nvim-lightbulb').debug({})`
+
 
 ------------------------------------------------------------------------------
                                                          *nvim-lightbulb-config*
