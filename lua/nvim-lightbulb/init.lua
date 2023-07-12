@@ -238,7 +238,11 @@ NvimLightbulb.update_lightbulb = function(config)
 
   -- Send the LSP request, canceling the previous one if necessary
   if vim.b[bufnr].lightbulb_lsp_cancel then
-    vim.b[bufnr].lightbulb_lsp_cancel()
+    -- The cancel function failing here may be due to the client no longer existing,
+    -- the server having a bad implementation of the cancel etc.
+    -- Failing doesn't affect the lightbulb behavior, so we can ignore the error.
+    pcall(vim.b[bufnr].lightbulb_lsp_cancel)
+    vim.b[bufnr].lightbulb_lsp_cancel = nil
   end
   local context = { diagnostics = vim.lsp.diagnostic.get_line_diagnostics() }
   context.only = opts.action_kinds
@@ -250,8 +254,13 @@ NvimLightbulb.update_lightbulb = function(config)
     line = params.range.start.line,
     col = params.range.start.character,
   }
-  vim.b[bufnr].lightbulb_lsp_cancel =
-    vim.lsp.buf_request_all(bufnr, "textDocument/codeAction", params, handler_factory(opts, position, bufnr))
+  vim.b[bufnr].lightbulb_lsp_cancel = vim.F.npcall(
+    vim.lsp.buf_request_all,
+    bufnr,
+    "textDocument/codeAction",
+    params,
+    handler_factory(opts, position, bufnr)
+  )
 end
 
 ---
