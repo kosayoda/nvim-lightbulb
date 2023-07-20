@@ -159,8 +159,21 @@ local function handler_factory(opts, position, bufnr)
     local has_actions = false
     for client_id, resp in pairs(responses) do
       if resp.result and not opts.ignore_id[client_id] and not vim.tbl_isempty(resp.result) then
-        has_actions = true
-        break
+        if not opts.ignore.actions_without_kind then
+          has_actions = true
+          break
+        else
+          -- If we only want to get code actions with kind, we will have to check all results
+          for _, r in pairs(resp.result) do
+            if r.kind and r.kind ~= "" then
+              has_actions = true
+            end
+            break
+          end
+          if has_actions then
+            break
+          end
+        end
       end
     end
 
@@ -394,15 +407,36 @@ NvimLightbulb.debug = function(config)
 
     for client_id, resp in pairs(responses) do
       if not opts.ignore_id[client_id] and resp.result and not vim.tbl_isempty(resp.result) then
-        has_actions = true
+        if opts.ignore.actions_without_kind then
+          for _, r in pairs(resp.result) do
+            if r.kind and r.kind ~= "" then
+              has_actions = true
+              break
+            end
+          end
+        else
+          has_actions = true
+        end
+        if not has_actions then
+          break
+        end
 
         append("\n")
         append(client_id_to_name[client_id] or "Unknown client", "Title")
         append("\n")
 
-        for idx, r in pairs(resp.result) do
-          append(string.format("%d. %s", idx, r.title))
-          append(" " .. r.kind .. "\n", "Comment")
+        local idx = 1
+        for _, r in pairs(resp.result) do
+          local has_kind = r.kind and r.kind ~= ""
+          if not opts.ignore.actions_without_kind or has_kind then
+            append(string.format("%d. %s", idx, r.title))
+            idx = idx + 1
+            if has_kind then
+              append(" " .. r.kind .. "\n", "Comment")
+            else
+              append(" (no kind)\n", "Comment")
+            end
+          end
         end
       end
     end
