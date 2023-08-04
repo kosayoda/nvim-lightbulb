@@ -129,8 +129,9 @@ local default_config = {
     -- Filetypes to ignore.
     -- Example: {"neo-tree", "lua"}
     ft = {},
-    -- Ignore code actions without a `kind` like refactor.rewrite, quickfix.
-    actions_without_kind = false,
+    -- Actions to ignore. To ignore code actions without a `kind` like refactor.rewrite, add "" to the table.
+    -- Example: {"source.fixAll", ""}
+    actions = {},
   },
 }
 
@@ -201,7 +202,7 @@ M.build = function(config, is_setup)
     ["autocmd.pattern"] = { config.autocmd.pattern, "table" },
     ["ignore.clients"] = { config.ignore.clients, "table" },
     ["ignore.ft"] = { config.ignore.ft, "table" },
-    ["ignore.actions_without_kind"] = { config.ignore.actions_without_kind, "boolean" },
+    ["ignore.actions"] = { config.ignore.actions, "table" },
   })
 
   return config
