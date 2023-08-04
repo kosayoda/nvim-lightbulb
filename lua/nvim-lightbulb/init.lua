@@ -159,13 +159,13 @@ local function handler_factory(opts, position, bufnr)
     local has_actions = false
     for client_id, resp in pairs(responses) do
       if resp.result and not opts.ignore_id[client_id] and not vim.tbl_isempty(resp.result) then
-        if not opts.ignore.actions_without_kind then
+        if vim.tbl_isempty(opts.ignore.actions) then
           has_actions = true
           break
         else
-          -- If we only want to get code actions with kind, we will have to check all results
+          -- Check if any of the results has a kind that's not ignored
           for _, r in pairs(resp.result) do
-            if r.kind and r.kind ~= "" then
+            if r.kind and not vim.tbl_contains(opts.ignore.actions, r.kind) then
               has_actions = true
             end
             break
@@ -407,9 +407,9 @@ NvimLightbulb.debug = function(config)
 
     for client_id, resp in pairs(responses) do
       if not opts.ignore_id[client_id] and resp.result and not vim.tbl_isempty(resp.result) then
-        if opts.ignore.actions_without_kind then
+        if not vim.tbl_isempty(opts.ignore.actions) then
           for _, r in pairs(resp.result) do
-            if r.kind and r.kind ~= "" then
+            if r.kind and not vim.tbl_contains(opts.ignore.actions, r.kind) then
               has_actions = true
               break
             end
@@ -427,11 +427,10 @@ NvimLightbulb.debug = function(config)
 
         local idx = 1
         for _, r in pairs(resp.result) do
-          local has_kind = r.kind and r.kind ~= ""
-          if not opts.ignore.actions_without_kind or has_kind then
+          if r.kind and not vim.tbl_contains(opts.ignore.actions, r.kind) then
             append(string.format("%d. %s", idx, r.title))
             idx = idx + 1
-            if has_kind then
+            if r.kind ~= "" then
               append(" " .. r.kind .. "\n", "Comment")
             else
               append(" (no kind)\n", "Comment")
