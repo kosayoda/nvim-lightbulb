@@ -234,7 +234,7 @@ NvimLightbulb.update_lightbulb = function(config)
 
   -- Check for code action capability
   local code_action_cap_found = false
-  for _, client in pairs(vim.lsp.get_active_clients({ bufnr = bufnr })) do
+  for _, client in pairs(vim.lsp.get_clients({ bufnr = bufnr })) do
     if client and client.supports_method("textDocument/codeAction") then
       -- If it is ignored, add the id to the ignore table for the handler
       if ignored_clients[client.name] then
@@ -343,7 +343,7 @@ NvimLightbulb.debug = function(config)
   local code_action_servers = {}
   local ignored_servers = {}
 
-  for _, client in pairs(vim.lsp.get_active_clients({ bufnr = bufnr })) do
+  for _, client in pairs(vim.lsp.get_clients({ bufnr = bufnr })) do
     if client and client.supports_method("textDocument/codeAction") then
       client_id_to_name[client.id] = client.name
 
