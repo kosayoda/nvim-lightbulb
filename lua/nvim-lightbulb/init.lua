@@ -41,6 +41,33 @@ NvimLightbulb.setup = function(config)
   lightbulb_config.set_defaults(config)
 end
 
+--- Check for codelenses at the current position.
+---
+---@param opts table Partial or full configuration table. See |nvim-lightbulb-config|.
+---@param position table<string, integer>|nil The position to update the extmark to. If nil, it returns false.
+---
+---@private
+local function is_code_lens(opts, position)
+  if not opts.code_lenses or position == nil then
+    return false
+  end
+  local codelens_actions = {}
+  for _, l in ipairs(vim.lsp.codelens.get(0)) do
+    table.insert(codelens_actions, { start = l.range.start, finish = l.range["end"] })
+  end
+  for _, action in ipairs(codelens_actions) do
+    if
+      action.start.line <= position.line
+      and position.line <= action.finish.line
+      and action.start.character <= position.col
+      and position.col <= action.finish.character
+    then
+      return true
+    end
+  end
+  return false
+end
+
 --- Update the lightbulb float.
 ---
 ---@param opts table Partial or full configuration table. See |nvim-lightbulb-config|.
@@ -68,7 +95,11 @@ local function update_float(opts, position, bufnr)
   end
 
   -- Open the window and set highlight
-  local _, lightbulb_win = lsp_util.open_floating_preview({ opts.text }, "plaintext", opts.win_opts)
+  local sign_text = opts.float.text
+  if is_code_lens(opts, position) then
+    sign_text = opts.float.lens_text
+  end
+  local _, lightbulb_win = lsp_util.open_floating_preview({ sign_text }, "plaintext", opts.win_opts)
   vim.api.nvim_win_set_option(lightbulb_win, "winhl", "Normal:" .. opts.hl)
 
   -- Set float transparency
@@ -92,10 +123,14 @@ local function update_status_text(opts, position, bufnr)
     return
   end
 
+  local sign_text = opts.status_text.text
+  if is_code_lens(opts, position) then
+    sign_text = opts.status_text.lens_text
+  end
   if position == nil then
     vim.b[bufnr].current_lightbulb_status_text = opts.status_text.text_unavailable
   else
-    vim.b[bufnr].current_lightbulb_status_text = opts.status_text.text
+    vim.b[bufnr].current_lightbulb_status_text = sign_text
   end
 end
 
@@ -118,16 +153,23 @@ local function update_extmark(opts, position, bufnr)
     return
   end
 
+  local sign_text = opts.sign.text
+  local virtual_text = opts.virtual_text.text
+  if is_code_lens(opts, position) then
+    sign_text = opts.sign.lens_text
+    virtual_text = opts.virtual_text.lens_text
+  end
+
   local extmark_opts = {
     id = extmark_id,
     priority = opts.priority,
     -- If true, breaks empty files
     strict = false,
     -- Sign configuration
-    sign_text = sign_enabled and opts.sign.text or nil,
+    sign_text = sign_enabled and sign_text or nil,
     sign_hl_group = sign_enabled and opts.sign.hl or nil,
     -- Virtual text configuration
-    virt_text = virt_text_enabled and { { opts.virtual_text.text, opts.virtual_text.hl } } or nil,
+    virt_text = virt_text_enabled and { { virtual_text, opts.virtual_text.hl } } or nil,
     virt_text_pos = (virt_text_enabled and type(opts.virtual_text.pos) == "string") and opts.virtual_text.pos or nil,
     virt_text_win_col = (virt_text_enabled and type(opts.virtual_text.pos) == "number") and opts.virtual_text.pos
       or nil,

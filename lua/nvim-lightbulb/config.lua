@@ -38,6 +38,12 @@ local default_config = {
   -- See: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeActionKind
   action_kinds = nil,
 
+  -- Enable code lens support.
+  -- If the current position has executable code lenses, the icon is changed from `text` to `lens_text`
+  -- for sign, virtual_text, float and status_text.
+  -- The code lens icon is configurable per handler.
+  code_lenses = false,
+
   -- Configuration for various handlers:
   -- 1. Sign column.
   sign = {
@@ -45,6 +51,7 @@ local default_config = {
     -- Text to show in the sign column.
     -- Must be between 1-2 characters.
     text = "💡",
+    lens_text = "🔎",
     -- Highlight group to highlight the sign column text.
     hl = "LightBulbSign",
   },
@@ -54,6 +61,7 @@ local default_config = {
     enabled = false,
     -- Text to show in the virt_text.
     text = "💡",
+    lens_text = "🔎",
     -- Position of virtual text given to |nvim_buf_set_extmark|.
     -- Can be a number representing a fixed column (see `virt_text_pos`).
     -- Can be a string representing a position (see `virt_text_win_col`).
@@ -70,6 +78,7 @@ local default_config = {
     enabled = false,
     -- Text to show in the floating window.
     text = "💡",
+    lens_text = "🔎",
     -- Highlight group to highlight the floating window.
     hl = "LightBulbFloatWin",
     -- Window options.
@@ -87,6 +96,7 @@ local default_config = {
     enabled = false,
     -- Text to set if a lightbulb is available.
     text = "💡",
+    lens_text = "🔎",
     -- Text to set if a lightbulb is unavailable.
     text_unavailable = "",
   },
@@ -165,6 +175,7 @@ M.build = function(config, is_setup)
     hide_in_unfocused_buffer = { config.hide_in_unfocused_buffer, "boolean" },
     link_highlights = { config.link_highlights, "boolean" },
     action_kinds = { config.action_kinds, "table", true },
+    code_lenses = { config.code_lenses, "boolean" },
     sign = { config.sign, "table" },
     virtual_text = { config.virtual_text, "table" },
     float = { config.float, "table" },
