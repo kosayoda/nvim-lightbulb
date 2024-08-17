@@ -201,8 +201,9 @@ local default_config = {
         -- Filetypes to ignore.
         -- Example: {"neo-tree", "lua"}
         ft = {},
-        -- Ignore code actions without a `kind` like refactor.rewrite, quickfix.
-        actions_without_kind = false,
+        -- Actions to ignore. To ignore code actions without a `kind` like refactor.rewrite, add "" to the table.
+        -- Example: {"source.fixAll", ""}
+        actions = {},
     },
 }
 ```
