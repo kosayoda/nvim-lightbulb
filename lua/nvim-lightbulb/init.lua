@@ -259,7 +259,7 @@ NvimLightbulb.update_lightbulb = function(config)
     pcall(vim.b[bufnr].lightbulb_lsp_cancel)
     vim.b[bufnr].lightbulb_lsp_cancel = nil
   end
-  local context = { diagnostics = vim.diagnostic.get() }
+  local context = { diagnostics = vim.diagnostic.get(0, { lnum = vim.fn.getcurpos()[2] }) }
   context.only = opts.action_kinds
 
   local params = lsp_util.make_range_params()
@@ -393,7 +393,7 @@ NvimLightbulb.debug = function(config)
   end
 
   -- Send the LSP request
-  local context = { diagnostics = vim.diagnostic.get() }
+  local context = { diagnostics = vim.diagnostic.get(0, { lnum = vim.fn.getcurpos()[2] }) }
   context.only = opts.action_kinds
 
   local params = lsp_util.make_range_params()
