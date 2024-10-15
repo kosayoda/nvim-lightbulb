@@ -27,6 +27,11 @@ local lightbulb_config = require("nvim-lightbulb.config")
 
 local get_lsp_active_clients = vim.fn.has("nvim-0.10") == 1 and vim.lsp.get_clients or vim.lsp.get_active_clients
 
+local get_lsp_line_diagnostics = vim.fn.has('nvim-0.11') == 0 and vim.lsp.diagnostic.get_line_diagnostics or function()
+  local opts = { lnum = vim.api.nvim_win_get_cursor(0)[1] - 1 }
+  return vim.lsp.diagnostic.from(vim.diagnostic.get(0, opts))
+end
+
 local NvimLightbulb = {}
 
 local LIGHTBULB_NS = vim.api.nvim_create_namespace("nvim-lightbulb")
@@ -259,7 +264,7 @@ NvimLightbulb.update_lightbulb = function(config)
     pcall(vim.b[bufnr].lightbulb_lsp_cancel)
     vim.b[bufnr].lightbulb_lsp_cancel = nil
   end
-  local context = { diagnostics = vim.lsp.diagnostic.get_line_diagnostics() }
+  local context = { diagnostics = get_lsp_line_diagnostics() }
   context.only = opts.action_kinds
 
   local params = lsp_util.make_range_params()
@@ -393,7 +398,7 @@ NvimLightbulb.debug = function(config)
   end
 
   -- Send the LSP request
-  local context = { diagnostics = vim.lsp.diagnostic.get_line_diagnostics() }
+  local context = { diagnostics = get_lsp_line_diagnostics() }
   context.only = opts.action_kinds
 
   local params = lsp_util.make_range_params()
