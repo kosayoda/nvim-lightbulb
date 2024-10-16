@@ -25,11 +25,21 @@
 local lsp_util = require("vim.lsp.util")
 local lightbulb_config = require("nvim-lightbulb.config")
 
-local get_lsp_active_clients = vim.fn.has("nvim-0.10") == 1 and vim.lsp.get_clients or vim.lsp.get_active_clients
+-- MSNV: 0.9.0
+local get_lsp_active_clients = vim.lsp.get_active_clients
+local get_lsp_line_diagnostics = function()
+  return vim.lsp.diagnostic.get_line_diagnostics(0)
+end
 
-local get_lsp_line_diagnostics = vim.fn.has('nvim-0.11') == 0 and vim.lsp.diagnostic.get_line_diagnostics or function()
-  local opts = { lnum = vim.api.nvim_win_get_cursor(0)[1] - 1 }
-  return vim.lsp.diagnostic.from(vim.diagnostic.get(0, opts))
+if vim.fn.has("nvim-0.10") == 1 then
+  get_lsp_active_clients = vim.lsp.get_clients
+end
+
+if vim.fn.has("nvim-0.11") == 1 then
+  get_lsp_line_diagnostics = function()
+    local opts = { lnum = vim.api.nvim_win_get_cursor(0)[1] - 1 }
+    return vim.lsp.diagnostic.from(vim.diagnostic.get(0, opts))
+  end
 end
 
 local NvimLightbulb = {}
@@ -137,7 +147,7 @@ local function update_extmark(opts, position, bufnr)
     virt_text = virt_text_enabled and { { opts.virtual_text.text, opts.virtual_text.hl } } or nil,
     virt_text_pos = (virt_text_enabled and type(opts.virtual_text.pos) == "string") and opts.virtual_text.pos or nil,
     virt_text_win_col = (virt_text_enabled and type(opts.virtual_text.pos) == "number") and opts.virtual_text.pos
-      or nil,
+        or nil,
     hl_mode = virt_text_enabled and opts.virtual_text.hl_mode or nil,
     -- Number configuration
     number_hl_group = opts.number.enabled and opts.number.hl or nil,
@@ -145,7 +155,7 @@ local function update_extmark(opts, position, bufnr)
     line_hl_group = opts.line.enabled and opts.line.hl or nil,
   }
   vim.b[bufnr].lightbulb_extmark =
-    vim.api.nvim_buf_set_extmark(bufnr, LIGHTBULB_NS, position.line, position.col + 1, extmark_opts)
+      vim.api.nvim_buf_set_extmark(bufnr, LIGHTBULB_NS, position.line, position.col + 1, extmark_opts)
 end
 
 --- Handler factory to keep track of current lightbulb line.

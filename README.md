@@ -38,7 +38,7 @@ or, get a configured message
 
 ## Prerequisites
 
-* Neovim v0.8.0 and above. Older versions may work but are not tested.
+* Neovim v0.9.0 and above. Older versions may work but are not tested.
 * Working LSP server configuration.
 
 ## Installation
