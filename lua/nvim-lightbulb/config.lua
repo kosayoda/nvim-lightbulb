@@ -6,6 +6,7 @@ local M = {}
 --- Default values:
 ---@eval return MiniDoc.afterlines_to_code(MiniDoc.current.eval_section)
 ---@tag nvim-lightbulb-config
+---@class nvim-lightbulb.Config
 local default_config = {
   -- Priority of the lightbulb for all handlers except float.
   priority = 10,
@@ -116,8 +117,10 @@ local default_config = {
     -- Set to a negative value to avoid setting the updatetime.
     updatetime = 200,
     -- See |nvim_create_autocmd|.
+    ---@type string[]
     events = { "CursorHold", "CursorHoldI" },
     -- See |nvim_create_autocmd| and |autocmd-pattern|.
+    ---@type string[]
     pattern = { "*" },
   },
 
@@ -132,13 +135,20 @@ local default_config = {
     -- Ignore code actions without a `kind` like refactor.rewrite, quickfix.
     actions_without_kind = false,
   },
+
+  --- A general filter function for code actions.
+  --- The function is called for code actions after any `ignore` or `action_kinds`
+  --- options are applied.
+  --- The function should return true to keep the code action, false otherwise.
+  ---@type (fun(client_name:string, result:lsp.CodeAction|lsp.Command):boolean)|nil
+  filter = nil,
 }
 
 --- Build a configuration based on the default configuration and accept overwrites.
 ---
----@param config table|nil Partial or full configuration table. See |nvim-lightbulb-config|.
+---@param config nvim-lightbulb.Config|nil Partial or full configuration table. See |nvim-lightbulb-config|.
 ---@param is_setup boolean Whether or not the command is called during setup.
----@return table
+---@return nvim-lightbulb.Config
 ---
 ---@private
 M.build = function(config, is_setup)
@@ -173,6 +183,7 @@ M.build = function(config, is_setup)
     line = { config.line, "table" },
     autocmd = { config.autocmd, "table" },
     ignore = { config.ignore, "table" },
+    filter = { config.filter, "function", true },
   })
 
   vim.validate({
@@ -209,7 +220,7 @@ end
 
 --- Set default configuration. Prefer |NvimLightbulb.setup| instead.
 ---
----@param opts table|nil Partial or full configuration table. See |nvim-lightbulb-config|.
+---@param opts nvim-lightbulb.Config|nil Partial or full configuration table. See |nvim-lightbulb-config|.
 ---
 ---@private
 M.set_defaults = function(opts)
@@ -255,7 +266,7 @@ end
 
 --- Get a prettified representation of the config in a format suitable for |nvim_echo|.
 ---
----@param opts table Configuration table. See |nvim-lightbulb-config|.
+---@param opts nvim-lightbulb.Config Configuration table. See |nvim-lightbulb-config|.
 ---@return table # The prettified configuration
 ---
 ---@private

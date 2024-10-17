@@ -55,7 +55,7 @@ local LIGHTBULB_NS = vim.api.nvim_create_namespace("nvim-lightbulb")
 ---
 --- Optional. Any configuration can also be passed to |NvimLightbulb.update_lightbulb|.
 ---
----@param config table|nil Partial or full configuration table. See |nvim-lightbulb-config|.
+---@param config nvim-lightbulb.Config|nil Partial or full configuration table. See |nvim-lightbulb-config|.
 ---
 ---@usage `require('nvim-lightbulb').setup({})`
 NvimLightbulb.setup = function(config)
@@ -177,24 +177,44 @@ local function handler_factory(opts, position, bufnr)
   ---@param responses table Map of client_id:request_result.
   ---@private
   local function code_action_handler(responses)
+    ---@param id number The client id of the LSP server
+    ---@param name string The client name of the LSP server
+    ---@param result lsp.CodeAction | lsp.Command The CodeAction to filter
+    ---@return boolean keep True to count the code action, false otherwise
+    local filter = function(id, name, result)
+      if opts.ignore_id[id] then
+        return false
+      end
+
+      if opts.ignore.actions_without_kind then
+        local found_without_kind = false
+        for _, r in pairs(result) do
+          if r.kind and r.kind ~= "" then
+            found_without_kind = true
+            break
+          end
+        end
+        if not found_without_kind then
+          return false
+        end
+      end
+
+      for _, r in pairs(result) do
+          if opts.filter and opts.filter(name, r) then
+            return true
+          end
+      end
+
+      return false
+    end
+
     -- Check for available code actions from all LSP server responses
     local has_actions = false
     for client_id, resp in pairs(responses) do
-      if resp.result and not opts.ignore_id[client_id] and not vim.tbl_isempty(resp.result) then
-        if not opts.ignore.actions_without_kind then
+      if resp.result and not vim.tbl_isempty(resp.result) then
+        if filter(client_id, opts.client_id_to_name[client_id], resp.result) then
           has_actions = true
           break
-        else
-          -- If we only want to get code actions with kind, we will have to check all results
-          for _, r in pairs(resp.result) do
-            if r.kind and r.kind ~= "" then
-              has_actions = true
-            end
-            break
-          end
-          if has_actions then
-            break
-          end
         end
       end
     end
@@ -237,6 +257,7 @@ end
 NvimLightbulb.update_lightbulb = function(config)
   local opts = lightbulb_config.build(config, false)
   opts.ignore_id = {}
+  opts.client_id_to_name = {}
 
   -- Return if the filetype is ignored
   if vim.tbl_contains(opts.ignore.ft, vim.bo.filetype) then
@@ -258,6 +279,8 @@ NvimLightbulb.update_lightbulb = function(config)
   local code_action_cap_found = false
   for _, client in pairs(get_lsp_active_clients({ bufnr = bufnr })) do
     if client and client.supports_method("textDocument/codeAction") then
+      opts.client_id_to_name[client.id] = client.name or "Unknown Client"
+
       -- If it is ignored, add the id to the ignore table for the handler
       if ignored_clients[client.name] then
         opts.ignore_id[client.id] = true
@@ -429,42 +452,36 @@ NvimLightbulb.debug = function(config)
 
     for client_id, resp in pairs(responses) do
       if not opts.ignore_id[client_id] and resp.result and not vim.tbl_isempty(resp.result) then
-        if opts.ignore.actions_without_kind then
-          for _, r in pairs(resp.result) do
-            if r.kind and r.kind ~= "" then
-              has_actions = true
-              break
-            end
-          end
-        else
-          has_actions = true
-        end
-        if not has_actions then
-          break
-        end
-
+        local client_name = client_id_to_name[client_id] or "Unknown Client"
         append("\n")
-        append(client_id_to_name[client_id] or "Unknown client", "Title")
+        append(client_name, "Title")
         append("\n")
 
-        local idx = 1
-        for _, r in pairs(resp.result) do
+        for idx, r in pairs(resp.result) do
           local has_kind = r.kind and r.kind ~= ""
-          if not opts.ignore.actions_without_kind or has_kind then
-            append(string.format("%d. %s", idx, r.title))
-            idx = idx + 1
-            if has_kind then
-              append(" " .. r.kind .. "\n", "Comment")
-            else
-              append(" (no kind)\n", "Comment")
-            end
+          append(string.format("%d. %s", idx, r.title))
+          if has_kind then
+            append(" " .. r.kind, "Comment")
+          else
+            append(" (no kind)", "Comment")
           end
+
+          if opts.ignore.actions_without_kind and not has_kind then
+            append(" [Ignored (actions_without_kind)]", "Error")
+          elseif opts.filter and not opts.filter(client_name, r) then
+            append(" [Ignored (filter)]", "Error")
+          else
+            has_actions = true
+          end
+
+          append("\n")
         end
       end
     end
 
     if not has_actions then
-      warn("No code actions found")
+      append("\n")
+      warn("No valid code actions found")
     end
 
     append("\n")

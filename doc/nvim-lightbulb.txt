@@ -1,5 +1,7 @@
+==============================================================================
 ------------------------------------------------------------------------------
                                                                 *nvim-lightbulb*
+
 *nvim-lightbulb*: VSCode 💡 for neovim's built-in LSP.
 
 --- Quickstart ---
@@ -24,49 +26,45 @@ Example:
 
 ------------------------------------------------------------------------------
                                                          *NvimLightbulb.setup()*
-
                         `NvimLightbulb.setup`({config})
 Module setup.
 
 Optional. Any configuration can also be passed to |NvimLightbulb.update_lightbulb|.
 
-Parameters~
-{config} `(table|nil)` Partial or full configuration table. See |nvim-lightbulb-config|.
+Parameters ~
+{config} `(nvim-lightbulb.Config|nil)` Partial or full configuration table. See |nvim-lightbulb-config|.
 
-Usage~
+Usage ~
 `require('nvim-lightbulb').setup({})`
 
 ------------------------------------------------------------------------------
                                                *NvimLightbulb.get_status_text()*
-
                     `NvimLightbulb.get_status_text`({bufnr})
 
 Get the configured text according to lightbulb status.
 Any configuration provided overrides the defaults passed to |NvimLightbulb.setup|.
 
-Parameters~
+Parameters ~
 {bufnr} `(number|nil)` Buffer handle. Defaults to current buffer.
 
-Usage~
+Usage ~
 `require('nvim-lightbulb').get_status_text()`
 
 ------------------------------------------------------------------------------
                                               *NvimLightbulb.update_lightbulb()*
-
                    `NvimLightbulb.update_lightbulb`({config})
 
 Display the lightbulb according to configuration.
 Any configuration provided overrides the defaults passed to |NvimLightbulb.setup|.
 
-Parameters~
+Parameters ~
 {config} `(table|nil)` Partial or full configuration table. See |nvim-lightbulb-config|.
 
-Usage~
+Usage ~
 `require('nvim-lightbulb').update_lightbulb({})`
 
 ------------------------------------------------------------------------------
                                                          *NvimLightbulb.debug()*
-
                         `NvimLightbulb.debug`({config})
 
 Display debug information related to nvim-lightbulb.
@@ -75,20 +73,22 @@ Prints information about:
 - LSP servers found, ignored, supporting code actions...
 - Any code actions at the current location along with their code action kind
 
-Parameters~
+Parameters ~
 {config} `(table|nil)` Partial or full configuration table. See |nvim-lightbulb-config|.
 
-Usage~
+Usage ~
 `require('nvim-lightbulb').debug({})`
 
 
+==============================================================================
 ------------------------------------------------------------------------------
                                                          *nvim-lightbulb-config*
+                                `default_config`
 
 Pass the configuration to |NvimLightbulb.setup| or |NvimLightbulb.update_lightbulb|.
 
 Default values:
->
+>lua
   local default_config = {
     -- Priority of the lightbulb for all handlers except float.
     priority = 10,
@@ -199,8 +199,10 @@ Default values:
       -- Set to a negative value to avoid setting the updatetime.
       updatetime = 200,
       -- See |nvim_create_autocmd|.
+      ---@type string[]
       events = { "CursorHold", "CursorHoldI" },
       -- See |nvim_create_autocmd| and |autocmd-pattern|.
+      ---@type string[]
       pattern = { "*" },
     },
 
@@ -215,9 +217,18 @@ Default values:
       -- Ignore code actions without a `kind` like refactor.rewrite, quickfix.
       actions_without_kind = false,
     },
+
+    --- A general filter function for code actions.
+    --- The function is called for code actions after any `ignore` or `action_kinds`
+    --- options are applied.
+    --- The function should return true to keep the code action, false otherwise.
+    ---@type (fun(client_name:string, result:lsp.CodeAction|lsp.Command):boolean)|nil
+    filter = nil,
   }
 
 <
+Class ~
+{nvim-lightbulb.Config}
 
 
  vim:tw=78:ts=8:noet:ft=help:norl:
