@@ -117,9 +117,9 @@ local function update_float(opts, position, bufnr)
   end
 
   -- Open the window and set highlight
-  local sign_text = opts.float.text
+  local sign_text = opts.text
   if is_code_lens(opts, position) then
-    sign_text = opts.float.lens_text
+    sign_text = opts.lens_text
   end
   local _, lightbulb_win = lsp_util.open_floating_preview({ sign_text }, "plaintext", opts.win_opts)
   set_win_option(lightbulb_win, "winhl", "Normal:" .. opts.hl)
@@ -292,6 +292,7 @@ end
 ---
 --- Display the lightbulb according to configuration.
 --- Any configuration provided overrides the defaults passed to |NvimLightbulb.setup|.
+---
 ---
 ---@param config table|nil Partial or full configuration table. See |nvim-lightbulb-config|.
 ---

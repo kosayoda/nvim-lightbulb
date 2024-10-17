@@ -56,9 +56,7 @@ Usage ~
 
 Display the lightbulb according to configuration.
 Any configuration provided overrides the defaults passed to |NvimLightbulb.setup|.
-|NvimLightbulb.config.code_lenses| enables checking if there are runnabled code 
-lenses under the cursor and potentially change the lightbulb icon using the
-|lens_text| handler configuration attribute.
+
 
 Parameters ~
 {config} `(table|nil)` Partial or full configuration table. See |nvim-lightbulb-config|.
