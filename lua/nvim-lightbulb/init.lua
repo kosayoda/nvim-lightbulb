@@ -247,7 +247,7 @@ local function handler_factory(opts, position, bufnr)
           end
       end
 
-      return false
+      return not opts.filter
     end
 
     -- Check for available code actions from all LSP server responses
