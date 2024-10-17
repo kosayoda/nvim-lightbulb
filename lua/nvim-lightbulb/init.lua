@@ -31,8 +31,13 @@ local get_lsp_line_diagnostics = function()
   return vim.lsp.diagnostic.get_line_diagnostics(0)
 end
 
+local set_win_option = vim.api.nvim_win_set_option
+
 if vim.fn.has("nvim-0.10") == 1 then
   get_lsp_active_clients = vim.lsp.get_clients
+  set_win_option = function(window, name, value)
+    vim.wo[window][0][name] = value
+  end
 end
 
 if vim.fn.has("nvim-0.11") == 1 then
@@ -86,11 +91,11 @@ local function update_float(opts, position, bufnr)
 
   -- Open the window and set highlight
   local _, lightbulb_win = lsp_util.open_floating_preview({ opts.text }, "plaintext", opts.win_opts)
-  vim.api.nvim_win_set_option(lightbulb_win, "winhl", "Normal:" .. opts.hl)
+  set_win_option(lightbulb_win, "winhl", "Normal:" .. opts.hl)
 
   -- Set float transparency
   if opts.win_opts["winblend"] ~= nil then
-    vim.api.nvim_win_set_option(lightbulb_win, "winblend", opts.win_opts.winblend)
+    set_win_option(lightbulb_win, "winblend", opts.win_opts.winblend)
   end
 
   vim.b[bufnr].lightbulb_floating_window = lightbulb_win
