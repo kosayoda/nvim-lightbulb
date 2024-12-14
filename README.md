@@ -2,7 +2,6 @@
 
 VSCode 💡 for neovim's built-in LSP.
 
-
 ## Table of contents
 
 - [Introduction](#introduction)
@@ -12,6 +11,7 @@ VSCode 💡 for neovim's built-in LSP.
 - [Configuration](#configuration)
 
 ## Introduction
+
 The plugin shows a lightbulb in the sign column whenever a `textDocument/codeAction` is available at the current cursor position.
 
 This makes code actions both [discoverable and efficient](https://rust-analyzer.github.io/blog/2020/09/28/how-to-make-a-light-bulb.html#the-mighty), as code actions can be available even when there are no visible diagnostics (warning, information, hints etc.).
@@ -22,7 +22,8 @@ This makes code actions both [discoverable and efficient](https://rust-analyzer.
 
 > In the screenshot, colorscheme is [catppuccin](https://github.com/catppuccin/nvim), font is [iosevka](https://typeof.net/Iosevka/), programming language is [rust](https://www.rust-lang.org/)
 
-When there is a *code action* available at the current cursor location, show a lightbulb...
+When there is a _code action_ available at the current cursor location, show a lightbulb...
+
 1. in the **sign column**
 2. as **virtual text**
 3. in a **floating window**
@@ -38,24 +39,27 @@ or, get a configured message
 
 ## Prerequisites
 
-* Neovim v0.9.0 and above. Older versions may work but are not tested.
-* Working LSP server configuration.
+- Neovim v0.9.0 and above. Older versions may work but are not tested.
+- Working LSP server configuration.
 
 ## Installation
 
 Just like any other plugin.
 
 Example using [lazy.nvim](https://github.com/folke/lazy.nvim):
+
 ```lua
 { 'kosayoda/nvim-lightbulb' }
 ```
 
 Example using [packer.nvim](https://github.com/wbthomason/packer.nvim):
+
 ```lua
 use { 'kosayoda/nvim-lightbulb' }
 ```
 
 Example using [vim-plug](https://github.com/junegunn/vim-plug):
+
 ```vim
 Plug 'kosayoda/nvim-lightbulb'
 ```
@@ -223,3 +227,36 @@ local default_config = {
     filter = nil,
 }
 ```
+
+### Filtering
+
+Find the name of the LSP client and the actions you want to filter. For example, to ignore the `ruff` `fix all` and `Organize Imports` actions:
+
+```lua
+    ...
+        filter = function(cli_name, action)
+          if cli_name == "ruff" then
+            if action.kind == "source.fixAll.ruff" or action.kind == "source.organizeImports.ruff" then
+              return false
+            end
+          end
+          return true
+        end,
+    ...
+```
+
+You can find all the information you need through `NvimLightbulb.debug`.
+
+```lua
+...
+[Code Actions]
+i With code action support: basedpyright, ruff, typos_lsp
+
+ruff
+1. Ruff (S603): Disable for this line quickfix
+2. Ruff: Fix all auto-fixable problems source.fixAll.ruff [Ignored (filter)]
+3. Ruff: Organize imports source.organizeImports.ruff [Ignored (filter)]
+...
+```
+
+Here, `ruff` is the name of LSP client and the list below contains the name, as well as the kind of the actions.
