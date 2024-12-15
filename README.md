@@ -70,7 +70,7 @@ Place this in your neovim configuration.
 
 ```lua
 require("nvim-lightbulb").setup({
-  autocmd = { enabled = true }
+    autocmd = { enabled = true }
 })
 ```
 
@@ -220,10 +220,10 @@ local default_config = {
     },
 
     --- A general filter function for code actions.
-    --- The function is called for code actions *after* any `ignore` or `action_kinds`
+    --- The function is called for code actions after any `ignore` or `action_kinds`
     --- options are applied.
     --- The function should return true to keep the code action, false otherwise.
-    ---@type (fun(client_name:string, result:lsp.CodeAction|lsp.Command):boolean)|nil
+    --- @type {client_name: string, lsp_kinds: string[]}[]
     filter = nil,
 }
 ```
@@ -233,30 +233,28 @@ local default_config = {
 Find the name of the LSP client and the actions you want to filter. For example, to ignore the `ruff` `fix all` and `Organize Imports` actions:
 
 ```lua
-    ...
-        filter = function(cli_name, action)
-          if cli_name == "ruff" then
-            if action.kind == "source.fixAll.ruff" or action.kind == "source.organizeImports.ruff" then
-              return false
-            end
-          end
-          return true
-        end,
-    ...
+...
+    filter = {
+        {
+            client_name = "ruff",
+            lsp_kinds = { "source.fixAll.ruff", "source.organizeImports.ruff" },
+        },
+    }
+...
 ```
 
 You can find all the information you need through `NvimLightbulb.debug`.
 
 ```lua
 ...
-[Code Actions]
-i With code action support: basedpyright, ruff, typos_lsp
+    [Code Actions]
+    i With code action support: basedpyright, ruff, typos_lsp
 
-ruff
-1. Ruff (S603): Disable for this line quickfix
-2. Ruff: Fix all auto-fixable problems source.fixAll.ruff [Ignored (filter)]
-3. Ruff: Organize imports source.organizeImports.ruff [Ignored (filter)]
-...
+        ruff
+        1. Ruff (S603): Disable for this line quickfix
+        2. Ruff: Fix all auto-fixable problems source.fixAll.ruff [Ignored (filter)]
+    3. Ruff: Organize imports source.organizeImports.ruff [Ignored (filter)]
+    ...
 ```
 
 Here, `ruff` is the name of LSP client and the list below contains the name, as well as the kind of the actions.
