@@ -348,7 +348,7 @@ NvimLightbulb.update_lightbulb = function(config)
   local context = { diagnostics = get_lsp_line_diagnostics() }
   context.only = opts.action_kinds
 
-  local params = lsp_util.make_range_params()
+  local params = lsp_util.make_range_params(0, "utf-8")
   params.context = context
 
   local position = {
@@ -482,7 +482,7 @@ NvimLightbulb.debug = function(config)
   local context = { diagnostics = get_lsp_line_diagnostics() }
   context.only = opts.action_kinds
 
-  local params = lsp_util.make_range_params()
+  local params = lsp_util.make_range_params(0, "utf-8")
   params.context = context
 
   --- Handler for textDocument/codeAction.
