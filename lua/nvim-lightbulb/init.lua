@@ -79,10 +79,10 @@ local function is_code_lens(opts, position)
   end
   for _, action in ipairs(codelens_actions) do
     if
-      action.start.line <= position.line
-      and position.line <= action.finish.line
-      and action.start.character <= position.col
-      and position.col <= action.finish.character
+        action.start.line <= position.line
+        and position.line <= action.finish.line
+        and action.start.character <= position.col
+        and position.col <= action.finish.character
     then
       return true
     end
@@ -132,6 +132,34 @@ local function update_float(opts, position, bufnr)
   vim.b[bufnr].lightbulb_floating_window = lightbulb_win
   vim.b[bufnr].lsp_floating_preview = lsp_win
 end
+
+
+--- return true if this kind of lsp.kind for the specified client_name is to be ignored
+---@param opts table Partial or full configuration table. See |nvim-lightbulb-config|.---@param client_name
+---@param client_name string
+---@param lsp_kind string
+---@return boolean
+local function filtered(opts, client_name, lsp_kind)
+  for _, value in pairs(opts.filter) do
+    if value.client_name == client_name then
+      if type(value.lsp_kinds) == "table" then
+        for _, s in pairs(value.lsp_kinds) do
+          if s == lsp_kind then
+            return false
+          end
+        end
+      end
+      if type(value.lsp_kinds) == "string" then
+        if value.lsp_kinds == lsp_kind then
+          return false
+        end
+      end
+    end
+  end
+  return true
+end
+
+
 
 --- Update the lightbulb status text.
 ---
@@ -242,12 +270,10 @@ local function handler_factory(opts, position, bufnr)
       end
 
       for _, r in pairs(result) do
-          if opts.filter and opts.filter(name, r) then
-            return true
-          end
+        return filtered(opts, name, r.kind)
       end
 
-      return not opts.filter
+      return true
     end
 
     -- Check for available code actions from all LSP server responses
@@ -511,7 +537,7 @@ NvimLightbulb.debug = function(config)
 
           if opts.ignore.actions_without_kind and not has_kind then
             append(" [Ignored (actions_without_kind)]", "Error")
-          elseif opts.filter and not opts.filter(client_name, r) then
+          elseif not filtered(opts, client_name, r) then
             append(" [Ignored (filter)]", "Error")
           else
             has_actions = true
