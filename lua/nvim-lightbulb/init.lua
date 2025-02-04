@@ -33,6 +33,12 @@ end
 
 local set_win_option = vim.api.nvim_win_set_option
 
+---@param client vim.lsp.Client
+---@return fun(method:string, opts?: {bufnr: integer?}):boolean
+local supports_method = function(client)
+  return client.supports_method
+end
+
 if vim.fn.has("nvim-0.10") == 1 then
   get_lsp_active_clients = vim.lsp.get_clients
   set_win_option = function(window, name, value)
@@ -44,6 +50,12 @@ if vim.fn.has("nvim-0.11") == 1 then
   get_lsp_line_diagnostics = function()
     local opts = { lnum = vim.api.nvim_win_get_cursor(0)[1] - 1 }
     return vim.lsp.diagnostic.from(vim.diagnostic.get(0, opts))
+  end
+
+  supports_method = function(client)
+    return function (method, opts)
+      return client.supports_method(client, method, opts)
+    end
   end
 end
 
@@ -340,7 +352,7 @@ NvimLightbulb.update_lightbulb = function(config)
   -- Check for code action capability
   local code_action_cap_found = false
   for _, client in pairs(get_lsp_active_clients({ bufnr = bufnr })) do
-    if client and client.supports_method("textDocument/codeAction") then
+    if client and supports_method(client)("textDocument/codeAction") then
       opts.client_id_to_name[client.id] = client.name or "Unknown Client"
 
       -- If it is ignored, add the id to the ignore table for the handler
@@ -451,7 +463,7 @@ NvimLightbulb.debug = function(config)
   local ignored_servers = {}
 
   for _, client in pairs(get_lsp_active_clients({ bufnr = bufnr })) do
-    if client and client.supports_method("textDocument/codeAction") then
+    if client and supports_method(client)("textDocument/codeAction") then
       client_id_to_name[client.id] = client.name
 
       -- If it is ignored, add the id to the ignore table for the handler
