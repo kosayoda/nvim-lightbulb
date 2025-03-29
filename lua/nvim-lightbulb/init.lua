@@ -250,6 +250,9 @@ local function handler_factory(opts, position, bufnr)
   ---@param responses table Map of client_id:request_result.
   ---@private
   local function code_action_handler(responses)
+    -- We received a response, so we shouldn't try to cancel it anymore
+    vim.b[bufnr].lightbulb_lsp_cancel = nil
+
     ---@param id number The client id of the LSP server
     ---@param name string The client name of the LSP server
     ---@param result lsp.CodeAction | lsp.Command The CodeAction to filter
