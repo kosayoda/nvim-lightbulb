@@ -163,68 +163,61 @@ local default_config = {
 ---@private
 M.build = function(config, is_setup)
   config = config or {}
-  vim.validate({ config = { config, "table" } })
+  vim.validate("config", config, "table")
 
   config = vim.tbl_deep_extend("force", default_config, config)
 
   local validate = config.validate_config
-  vim.validate({
-    ["config.validate_config"] = {
-      validate,
+  vim.validate("config.validate_config", validate,
       function(c)
-        return c == "auto" or c == "always" or c == "never"
-      end,
-    },
-  })
+          return c == "auto" or c == "always" or c == "never"
+      end
+  )
   if validate == "never" or (validate == "auto" and not is_setup) then
     return config
   end
 
   -- Validate config
-  vim.validate({
-    hide_in_unfocused_buffer = { config.hide_in_unfocused_buffer, "boolean" },
-    link_highlights = { config.link_highlights, "boolean" },
-    action_kinds = { config.action_kinds, "table", true },
-    code_lenses = { config.code_lenses, "boolean" },
-    sign = { config.sign, "table" },
-    virtual_text = { config.virtual_text, "table" },
-    float = { config.float, "table" },
-    status_text = { config.status_text, "table" },
-    number = { config.number, "table" },
-    line = { config.line, "table" },
-    autocmd = { config.autocmd, "table" },
-    ignore = { config.ignore, "table" },
-    filter = { config.filter, "function", true },
-  })
+  vim.validate("hide_in_unfocused_buffer", config.hide_in_unfocused_buffer, "boolean")
+  vim.validate("link_highlights", config.link_highlights, "boolean")
+  vim.validate("action_kinds", config.action_kinds, "table", true)
+  vim.validate("code_lenses", config.code_lenses, "boolean")
+  vim.validate("sign", config.sign, "table")
+  vim.validate("virtual_text", config.virtual_text, "table")
+  vim.validate("float", config.float, "table")
+  vim.validate("status_text", config.status_text, "table")
+  vim.validate("number", config.number, "table")
+  vim.validate("line", config.line, "table")
+  vim.validate("autocmd", config.autocmd, "table")
+  vim.validate("ignore", config.ignore, "table")
+  vim.validate("filter", config.filter, "function", true)
 
-  vim.validate({
-    ["sign.enabled"] = { config.sign.enabled, "boolean" },
-    ["sign.text"] = { config.sign.text, "string" },
-    ["sign.hl"] = { config.sign.hl, "string" },
-    ["virtual_text.enabled"] = { config.virtual_text.enabled, "boolean" },
-    ["virtual_text.text"] = { config.virtual_text.text, "string" },
-    ["virtual_text.pos"] = { config.virtual_text.pos, { "string", "number" } },
-    ["virtual_text.hl"] = { config.virtual_text.hl, "string" },
-    ["virtual_text.hl_mode"] = { config.virtual_text.hl_mode, "string" },
-    ["float.enabled"] = { config.float.enabled, "boolean" },
-    ["float.text"] = { config.float.text, "string" },
-    ["float.hl"] = { config.float.hl, "string" },
-    ["float.win_opts"] = { config.float.win_opts, "table" },
-    ["status_text.enabled"] = { config.status_text.enabled, "boolean" },
-    ["status_text.text"] = { config.status_text.text, "string" },
-    ["status_text.text_unavailable"] = { config.status_text.text_unavailable, "string" },
-    ["number.enabled"] = { config.number.enabled, "boolean" },
-    ["number.hl"] = { config.number.hl, "string" },
-    ["line.enabled"] = { config.line.enabled, "boolean" },
-    ["line.hl"] = { config.line.hl, "string" },
-    ["autocmd.enabled"] = { config.autocmd.enabled, "boolean" },
-    ["autocmd.updatetime"] = { config.autocmd.updatetime, "number" },
-    ["autocmd.events"] = { config.autocmd.events, "table" },
-    ["autocmd.pattern"] = { config.autocmd.pattern, "table" },
-    ["ignore.clients"] = { config.ignore.clients, "table" },
-    ["ignore.ft"] = { config.ignore.ft, "table" },
-    ["ignore.actions_without_kind"] = { config.ignore.actions_without_kind, "boolean" },
-  })
+  vim.validate("sign.enabled", config.sign.enabled, "boolean")
+  vim.validate("sign.text", config.sign.text, "string")
+  vim.validate("sign.hl", config.sign.hl, "string")
+  vim.validate("virtual_text.enabled", config.virtual_text.enabled, "boolean")
+  vim.validate("virtual_text.text", config.virtual_text.text, "string")
+  vim.validate("virtual_text.pos", config.virtual_text.pos, {"string", "number"})
+  vim.validate("virtual_text.hl", config.virtual_text.hl, "string")
+  vim.validate("virtual_text.hl_mode", config.virtual_text.hl_mode, "string")
+  vim.validate("float.enabled", config.float.enabled, "boolean")
+  vim.validate("float.text", config.float.text, "string")
+  vim.validate("float.hl", config.float.hl, "string")
+  vim.validate("float.win_opts", config.float.win_opts, "table")
+  vim.validate("status_text.enabled", config.status_text.enabled, "boolean")
+  vim.validate("status_text.text", config.status_text.text, "string")
+  vim.validate("status_text.text_unavailable", config.status_text.text_unavailable, "string")
+  vim.validate("number.enabled", config.number.enabled, "boolean")
+  vim.validate("number.hl", config.number.hl, "string")
+  vim.validate("line.enabled", config.line.enabled, "boolean")
+  vim.validate("line.hl", config.line.hl, "string")
+  vim.validate("autocmd.enabled", config.autocmd.enabled, "boolean")
+  vim.validate("autocmd.updatetime", config.autocmd.updatetime, "number")
+  vim.validate("autocmd.events", config.autocmd.events, "table")
+  vim.validate("autocmd.pattern", config.autocmd.pattern, "table")
+  vim.validate("ignore.clients", config.ignore.clients, "table")
+  vim.validate("ignore.ft", config.ignore.ft, "table")
+  vim.validate("ignore.actions_without_kind", config.ignore.actions_without_kind, "boolean")
 
   return config
 end
