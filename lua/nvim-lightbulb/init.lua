@@ -33,6 +33,12 @@ end
 
 local set_win_option = vim.api.nvim_win_set_option
 
+---@param client vim.lsp.Client
+---@return fun(method:string, opts?: {bufnr: integer?}):boolean
+local supports_method = function(client)
+  return client.supports_method
+end
+
 if vim.fn.has("nvim-0.10") == 1 then
   get_lsp_active_clients = vim.lsp.get_clients
   set_win_option = function(window, name, value)
@@ -44,6 +50,12 @@ if vim.fn.has("nvim-0.11") == 1 then
   get_lsp_line_diagnostics = function()
     local opts = { lnum = vim.api.nvim_win_get_cursor(0)[1] - 1 }
     return vim.lsp.diagnostic.from(vim.diagnostic.get(0, opts))
+  end
+
+  supports_method = function(client)
+    return function (method, opts)
+      return client.supports_method(client, method, opts)
+    end
   end
 end
 
@@ -184,6 +196,9 @@ local function update_status_text(opts, position, bufnr)
   end
 end
 
+-- The following is a variable designed to prevent re-entrancy in the 
+-- update_extmark function below.
+local in_update_extmark = false
 --- Update the lightbulb extmark.
 ---
 ---@param opts table Partial or full configuration table. See |nvim-lightbulb-config|.
@@ -192,14 +207,28 @@ end
 ---
 ---@private
 local function update_extmark(opts, position, bufnr)
+  -- Guard against re-entrancy.
+  if (in_update_extmark) then
+      return
+  end
+  -- Set guard against re-entrancy.
+  in_update_extmark = true
+
   local sign_enabled = opts.sign.enabled
   local virt_text_enabled = opts.virtual_text.enabled
 
+  -- Intended to fix an invalid reference when the buffer number is invalid
+  -- for some unknown reason.
+  if (vim.b[bufnr] == nil) then
+      in_update_extmark = false
+      return
+  end
   local extmark_id = vim.b[bufnr].lightbulb_extmark
   if not (sign_enabled or virt_text_enabled) or position == nil then
     if extmark_id ~= nil then
       vim.api.nvim_buf_del_extmark(bufnr, LIGHTBULB_NS, extmark_id)
     end
+    in_update_extmark = false
     return
   end
 
@@ -231,6 +260,8 @@ local function update_extmark(opts, position, bufnr)
   }
   vim.b[bufnr].lightbulb_extmark =
       vim.api.nvim_buf_set_extmark(bufnr, LIGHTBULB_NS, position.line, position.col + 1, extmark_opts)
+
+  in_update_extmark = false
 end
 
 --- Handler factory to keep track of current lightbulb line.
@@ -247,6 +278,9 @@ local function handler_factory(opts, position, bufnr)
   ---@param responses table Map of client_id:request_result.
   ---@private
   local function code_action_handler(responses)
+    -- We received a response, so we shouldn't try to cancel it anymore
+    vim.b[bufnr].lightbulb_lsp_cancel = nil
+
     ---@param id number The client id of the LSP server
     ---@param name string The client name of the LSP server
     ---@param result lsp.CodeAction | lsp.Command The CodeAction to filter
@@ -347,7 +381,7 @@ NvimLightbulb.update_lightbulb = function(config)
   -- Check for code action capability
   local code_action_cap_found = false
   for _, client in pairs(get_lsp_active_clients({ bufnr = bufnr })) do
-    if client and client.supports_method("textDocument/codeAction") then
+    if client and supports_method(client)("textDocument/codeAction") then
       opts.client_id_to_name[client.id] = client.name or "Unknown Client"
 
       -- If it is ignored, add the id to the ignore table for the handler
@@ -374,7 +408,7 @@ NvimLightbulb.update_lightbulb = function(config)
   local context = { diagnostics = get_lsp_line_diagnostics() }
   context.only = opts.action_kinds
 
-  local params = lsp_util.make_range_params()
+  local params = lsp_util.make_range_params(0, "utf-8")
   params.context = context
 
   local position = {
@@ -458,7 +492,7 @@ NvimLightbulb.debug = function(config)
   local ignored_servers = {}
 
   for _, client in pairs(get_lsp_active_clients({ bufnr = bufnr })) do
-    if client and client.supports_method("textDocument/codeAction") then
+    if client and supports_method(client)("textDocument/codeAction") then
       client_id_to_name[client.id] = client.name
 
       -- If it is ignored, add the id to the ignore table for the handler
@@ -508,7 +542,7 @@ NvimLightbulb.debug = function(config)
   local context = { diagnostics = get_lsp_line_diagnostics() }
   context.only = opts.action_kinds
 
-  local params = lsp_util.make_range_params()
+  local params = lsp_util.make_range_params(0, "utf-8")
   params.context = context
 
   --- Handler for textDocument/codeAction.
