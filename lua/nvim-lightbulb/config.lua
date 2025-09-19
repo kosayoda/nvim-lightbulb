@@ -150,7 +150,7 @@ local default_config = {
   --- The function is called for code actions after any `ignore` or `action_kinds`
   --- options are applied.
   --- The function should return true to keep the code action, false otherwise.
-  ---@type (fun(client_name:string, result:lsp.CodeAction|lsp.Command):boolean)|nil
+  --- @type {client_name: string, lsp_kinds: string[]}[]
   filter = nil,
 }
 
@@ -194,7 +194,7 @@ M.build = function(config, is_setup)
     line = { config.line, "table" },
     autocmd = { config.autocmd, "table" },
     ignore = { config.ignore, "table" },
-    filter = { config.filter, "function", true },
+    -- filter = { config.filter, "function", true },
   })
 
   vim.validate({
