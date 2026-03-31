@@ -25,37 +25,16 @@
 local lsp_util = require("vim.lsp.util")
 local lightbulb_config = require("nvim-lightbulb.config")
 
--- MSNV: 0.9.0
-local get_lsp_active_clients = vim.lsp.get_active_clients
-local get_lsp_line_diagnostics = function()
-  return vim.lsp.diagnostic.get_line_diagnostics(0)
+local function get_lsp_line_diagnostics()
+  local opts = { lnum = vim.api.nvim_win_get_cursor(0)[1] - 1 }
+  return vim.lsp.diagnostic.from(vim.diagnostic.get(0, opts))
 end
-
-local set_win_option = vim.api.nvim_win_set_option
 
 ---@param client vim.lsp.Client
 ---@return fun(method:string, opts?: {bufnr: integer?}):boolean
-local supports_method = function(client)
-  return client.supports_method
-end
-
-if vim.fn.has("nvim-0.10") == 1 then
-  get_lsp_active_clients = vim.lsp.get_clients
-  set_win_option = function(window, name, value)
-    vim.wo[window][0][name] = value
-  end
-end
-
-if vim.fn.has("nvim-0.11") == 1 then
-  get_lsp_line_diagnostics = function()
-    local opts = { lnum = vim.api.nvim_win_get_cursor(0)[1] - 1 }
-    return vim.lsp.diagnostic.from(vim.diagnostic.get(0, opts))
-  end
-
-  supports_method = function(client)
-    return function (method, opts)
-      return client.supports_method(client, method, opts)
-    end
+local function supports_method(client)
+  return function(method, opts)
+    return client.supports_method(client, method, opts)
   end
 end
 
@@ -134,11 +113,11 @@ local function update_float(opts, position, bufnr)
     sign_text = opts.lens_text
   end
   local _, lightbulb_win = lsp_util.open_floating_preview({ sign_text }, "plaintext", opts.win_opts)
-  set_win_option(lightbulb_win, "winhl", "Normal:" .. opts.hl)
+  vim.wo[lightbulb_win][0]["winhl"] = "Normal:" .. opts.hl
 
   -- Set float transparency
   if opts.win_opts["winblend"] ~= nil then
-    set_win_option(lightbulb_win, "winblend", opts.win_opts.winblend)
+    vim.wo[lightbulb_win][0]["winblend"] = opts.win_opts.winblend
   end
 
   vim.b[bufnr].lightbulb_floating_window = lightbulb_win
@@ -354,7 +333,7 @@ NvimLightbulb.update_lightbulb = function(config)
 
   -- Check for code action capability
   local code_action_cap_found = false
-  for _, client in pairs(get_lsp_active_clients({ bufnr = bufnr })) do
+  for _, client in pairs(vim.lsp.get_clients({ bufnr = bufnr })) do
     if client and supports_method(client)("textDocument/codeAction") then
       opts.client_id_to_name[client.id] = client.name or "Unknown Client"
 
@@ -465,7 +444,7 @@ NvimLightbulb.debug = function(config)
   local code_action_servers = {}
   local ignored_servers = {}
 
-  for _, client in pairs(get_lsp_active_clients({ bufnr = bufnr })) do
+  for _, client in pairs(vim.lsp.get_clients({ bufnr = bufnr })) do
     if client and supports_method(client)("textDocument/codeAction") then
       client_id_to_name[client.id] = client.name
 
