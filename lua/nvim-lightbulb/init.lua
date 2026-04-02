@@ -65,7 +65,7 @@ local function is_code_lens(opts, position)
     return false
   end
   local codelens_actions = {}
-  for _, l in ipairs(vim.lsp.codelens.get(0)) do
+  for _, l in ipairs(vim.lsp.codelens.get({ bufnr = 0 })) do
     table.insert(codelens_actions, { start = l.range.start, finish = l.range["end"] })
   end
   for _, action in ipairs(codelens_actions) do
