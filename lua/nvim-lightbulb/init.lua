@@ -25,6 +25,15 @@
 local lsp_util = require("vim.lsp.util")
 local lightbulb_config = require("nvim-lightbulb.config")
 
+local function get_codelens(bufnr)
+  if vim.fn.has("nvim-0.12") == 1 then
+    return vim.lsp.codelens.get({ bufnr = bufnr })
+  else
+    --- MSNV: 0.11.0
+    return vim.lsp.codelens.get(bufnr)
+  end
+end
+
 local function get_lsp_line_diagnostics()
   local opts = { lnum = vim.api.nvim_win_get_cursor(0)[1] - 1 }
   return vim.lsp.diagnostic.from(vim.diagnostic.get(0, opts))
@@ -65,7 +74,7 @@ local function is_code_lens(opts, position)
     return false
   end
   local codelens_actions = {}
-  for _, l in ipairs(vim.lsp.codelens.get(0)) do
+  for _, l in ipairs(get_codelens(0)) do
     table.insert(codelens_actions, { start = l.range.start, finish = l.range["end"] })
   end
   for _, action in ipairs(codelens_actions) do
