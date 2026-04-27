@@ -27,7 +27,8 @@ local lightbulb_config = require("nvim-lightbulb.config")
 
 local function get_codelens(bufnr)
   if vim.fn.has("nvim-0.12") == 1 then
-    return vim.lsp.codelens.get({ bufnr = bufnr })
+    -- On 0.12+, codelens.get returns { client_id, lens } entries; unwrap to lens.
+    return vim.tbl_map(function(r) return r.lens end, vim.lsp.codelens.get({ bufnr = bufnr }))
   else
     --- MSNV: 0.11.0
     return vim.lsp.codelens.get(bufnr)
